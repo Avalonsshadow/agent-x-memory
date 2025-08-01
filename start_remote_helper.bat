@@ -1,0 +1,6 @@
+@echo off
+echo Starte Agent_X RemoteHelper...
+python remote_helper.py
+echo.
+echo Vorgang abgeschlossen. Drücke eine Taste zum Schließen...
+pause

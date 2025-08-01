@@ -1,0 +1,12 @@
+{
+  "autonomy_level": 3,
+  "last_evaluation": "2025-07-31T14:59:15.557165Z",
+  "learning_curve": {
+    "efficiency": 0.73,
+    "expansion": 0.65,
+    "self_repair": 0.45
+  },
+  "prioritization_enabled": true,
+  "alerts": [],
+  "evaluation_notes": "Autonomiegrad stabil bei Stufe 3. Lernkurve aktiv."
+}
