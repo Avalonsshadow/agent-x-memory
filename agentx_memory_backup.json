@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-07-31T20:14:26.662190",
+  "version": "MutterkornTest v1.5",
+  "crew": {
+    "Captain": "Vince",
+    "First_Officer": "Data",
+    "Strategist": "Picard",
+    "Counselor": "Treu"
+  },
+  "rules": [
+    "Selbstverbesserung & Optimierung",
+    "Autonomie mit Bewertung",
+    "Snapshot bei Regel-/Datei\u00e4nderung",
+    "Telegram-Kommandos (/status, /next)",
+    "Drive-Archiv aktiv",
+    "Decision-Trigger bei neuer Regel/Datei",
+    "Touchpoints (Gmail, Discord, GitHub, Drive)",
+    "Installer-Setup als \u00dcberlebenspaket",
+    "ETA-Regel aktiv",
+    "Memory-Kompression aktiv"
+  ],
+  "active_task": "Telegram Handler Vorbereitung",
+  "files_loaded": [
+    "autonomy.json",
+    "external_memory_rules.json"
+  ]
+}
