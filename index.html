@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LCARS Dashboard v3.2</title>
+  <style>
+    body { background-color: black; color: white; font-family: sans-serif; overflow: hidden; margin: 0; }
+    .module {
+      position: absolute;
+      width: 290px;
+      height: 180px;
+      background-color: #331a33;
+      border: 2px solid #FF9900;
+      border-radius: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      transition: all 0.2s ease-in-out;
+    }
+    .module:hover {
+      box-shadow: 0 0 12px #FFCC00;
+      transform: scale(1.02);
+      cursor: pointer;
+    }
+    .title { font-size: 1.2em; font-weight: bold; color: #FFCC00; }
+    .subtitle { font-size: 0.9em; color: #CCCCCC; }
+    .progress-container { background-color: #220022; border-radius: 5px; margin-top: 8px; }
+    .progress-bar {
+      height: 16px;
+      background-color: #33CCFF;
+      color: white;
+      font-size: 0.75em;
+      text-align: center;
+    }
+    .bar-inner {
+      height: 12px;
+      background-color: orange;
+      color: white;
+      font-size: 0.7em;
+      text-align: center;
+    }
+    .dot {
+      height: 10px;
+      width: 10px;
+      background-color: limegreen;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
+    .popup {
+      display: none;
+      position: fixed;
+      width: 280px;
+      padding: 15px;
+      background-color: #1a001a;
+      border: 2px solid #FFCC00;
+      border-radius: 10px;
+      color: white;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      box-shadow: 0 0 12px #FFCC00;
+    }
+    .popup h3 { margin-top: 0; color: #FFCC00; }
+    .popup .close-btn { float: right; cursor: pointer; color: #FF6666; }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+
+<div class="module" style="top:30px; left:30px;" onclick="openPopup('Modul 1', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 1</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:30px; left:350px;" onclick="openPopup('Modul 2', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 2</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:30px; left:670px;" onclick="openPopup('Modul 3', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 3</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:30px; left:990px;" onclick="openPopup('Modul 4', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 4</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:230px; left:30px;" onclick="openPopup('Modul 5', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 5</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:230px; left:350px;" onclick="openPopup('Modul 6', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 6</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:230px; left:670px;" onclick="openPopup('Modul 7', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 7</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:230px; left:990px;" onclick="openPopup('Modul 8', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 8</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:430px; left:30px;" onclick="openPopup('Modul 9', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 9</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:430px; left:350px;" onclick="openPopup('Modul 10', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 10</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:430px; left:670px;" onclick="openPopup('Modul 11', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 11</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+<div class="module" style="top:430px; left:990px;" onclick="openPopup('Modul 12', 'Dies ist ein Drilldown-Fenster.')">
+  <div class="title">📦 Modul 12</div>
+  <div class="subtitle">Status offen</div>
+  <div class="progress-container"><div class="progress-bar" style="width: 60%;">60%</div></div>
+  <div class="detail"><span class="dot"></span>Projektstatus</div>
+  <div class="progress-container"><div class="bar-inner" style="width: 40%">40%</div></div>
+</div>
+
+</div>
+<div id="popup" class="popup"></div>
+<script>
+  function openPopup(title, content) {
+    const popup = document.getElementById("popup");
+    popup.innerHTML = '<span class="close-btn" onclick="closePopup()">✖</span><h3>' + title + '</h3><p>' + content + '</p>';
+    popup.style.display = 'block';
+  }
+  function closePopup() {
+    document.getElementById("popup").style.display = 'none';
+  }
+</script>
+</body>
+</html>
