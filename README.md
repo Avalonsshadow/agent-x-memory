@@ -1,6 +1,5 @@
-# MutterkornTestv1
+# LCARS Dashboard v3.2
 
-Diese ZIP enthält Agent_X, das Autonomie-Profil und den neuen Konversations-Importer.
-# MutterkornTestv1
+Enthält 12 Module + Drilldowns + Fortschrittsanzeige
 
-Diese ZIP enthält Agent_X, das Autonomie-Profil und den neuen Konversations-Importer.
+Mobilfähig, GitHub-kompatibel.
