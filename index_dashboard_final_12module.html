@@ -1,5 +1,241 @@
 <!DOCTYPE html>
-<html lang="en">
-<!-- Simulierter Inhalt -->
-<body><h1>LCARS Dashboard Hauptmodul</h1></body>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent_X Masterconsole v1.5.8</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: black;
+      font-family: 'Segoe UI', sans-serif;
+      color: #FF9933;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .top-section {
+      flex: 0 0 auto;
+      padding: 0.5rem 1rem;
+      text-align: center;
+      background-color: #1a0000;
+      border-bottom: 1px solid #FF9933;
+    }
+    .main-section {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1%;
+    }
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      row-gap: 2%;
+      column-gap: 2%;
+      padding: 2%;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+    }
+    .module-box {
+      background-color: #1a0000;
+      padding: 1rem;
+      border: 1px solid #FF9933;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(255, 153, 51, 0.6);
+      transition: all 0.3s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: flex-start;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      cursor: pointer;
+    }
+    .module-box:hover {
+      transform: scale(1.5);
+      box-shadow: 0 0 30px rgba(255, 200, 100, 1);
+      z-index: 10;
+      overflow: visible;
+    }
+    .progress {
+      height: 1rem;
+      background-color: #111;
+      border: 1px solid #FF9933;
+      margin: 0.5rem 0;
+      width: 100%;
+      text-align: left;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background-color: #FF9933;
+      color: #fff;
+      font-size: 0.8rem;
+      line-height: 1rem;
+      text-align: left;
+      padding-left: 0.3rem;
+      box-sizing: border-box;
+    }
+    .module-detail {
+      font-size: 0.8rem;
+      color: #AAA;
+      margin-top: 0.5rem;
+      width: 100%;
+    }
+    .module-detail ul {
+      padding-left: 0;
+      list-style: none;
+      width: 100%;
+      margin: 0;
+    }
+    .module-detail li {
+      margin-bottom: 0.4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .detail-progress {
+      height: 0.5rem;
+      background-color: #111;
+      border: 1px solid #FF9933;
+      width: 60%;
+      margin-left: 0.5rem;
+      text-align: left;
+      overflow: hidden;
+    }
+    .detail-bar {
+      height: 100%;
+      background-color: #FF9933;
+      color: #fff;
+      font-size: 0.6rem;
+      line-height: 0.5rem;
+      padding-left: 0.2rem;
+      box-sizing: border-box;
+    }
+    .modul-title {
+      font-weight: bold;
+      margin-bottom: 0.2rem;
+      width: 100%;
+      text-align: left;
+    }
+    .modul-desc {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      width: 100%;
+      text-align: left;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+    }
+    .detail-content {
+      background-color: #1a0000;
+      padding: 2rem;
+      border: 1px solid #FF9933;
+      border-radius: 8px;
+      box-shadow: 0 0 30px rgba(255, 200, 100, 1);
+      width: 70%;
+      height: 70%;
+      overflow: auto;
+      color: #FF9933;
+    }
+    .task-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .task-list li {
+      margin-bottom: 0.5rem;
+    }
+    .stat-list {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 1rem;
+    }
+    .stat-list li {
+      margin-bottom: 0.3rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-section"><strong>🧠 Agent_X</strong> Masterconsole v1.5.8 – Übersicht / Fortschritt / Tasks / Alerts</div>
+  <div class="main-section">
+    <div class="module-grid" id="moduleGrid"></div>
+  </div>
+  <div id="detailModal" class="modal"></div>
+  <script>
+   const rand = () => Math.floor(60 + Math.random() * 30);
+   const modules = [
+    { title: '📦 Modul 1 v1.0', desc: 'Wissensdatenbank', details: [{ label: 'Sync', icon: '🔄' }, { label: 'Index', icon: '📚' }, { label: 'Backup', icon: '💾' }], tasks: [{ name: 'Import der Chat-Logs', priority: 'hoch' }, { name: 'Duplikate entfernen', priority: 'mittel' }, { name: 'Backup in Drive', priority: 'niedrig' }], stats: [{ label: 'Einträge', value: '2450' }, { label: 'Duplikate', value: '34' }, { label: 'Backup-Zyklus', value: 'täglich' }] },
+    { title: '📦 Modul 2 v1.0', desc: 'Projektplanung', details: [{ label: 'Plan', icon: '📝' }, { label: 'Teams', icon: '👥' }, { label: 'Risiken', icon: '⚠️' }], tasks: [{ name: 'Roadmap aktualisieren', priority: 'hoch' }, { name: 'Milestones verteilen', priority: 'mittel' }, { name: 'Risikoanalyse', priority: 'niedrig' }], stats: [{ label: 'Milestones', value: '12' }, { label: 'Offen', value: '3' }, { label: 'Teammitglieder', value: '5' }] },
+    { title: '📦 Modul 3 v1.0', desc: 'Systemmonitoring', details: [{ label: 'CPU', icon: '🖥️' }, { label: 'RAM', icon: '📈' }, { label: 'Netz', icon: '🌐' }], tasks: [{ name: 'Log-Analyse', priority: 'hoch' }, { name: 'Alerting konfigurieren', priority: 'mittel' }, { name: 'Statistiken exportieren', priority: 'niedrig' }], stats: [{ label: 'CPU-Auslastung', value: '68%' }, { label: 'RAM-Verbrauch', value: '72%' }, { label: 'Netz-Fehler', value: '1' }] },
+    { title: '📦 Modul 4 v1.0', desc: 'Backup Service', details: [{ label: 'Schedule', icon: '⏰' }, { label: 'Integrität', icon: '✅' }, { label: 'Cloud', icon: '☁️' }], tasks: [{ name: 'Neue Sicherung', priority: 'hoch' }, { name: 'Restore-Test', priority: 'mittel' }, { name: 'Cleanup', priority: 'niedrig' }], stats: [{ label: 'Letztes Backup', value: 'heute' }, { label: 'Fehlerfrei', value: 'ja' }, { label: 'Cloud-Speicher', value: '85%' }] },
+    { title: '📦 Modul 5 v1.0', desc: 'Benutzerverwaltung', details: [{ label: 'Accounts', icon: '👤' }, { label: 'Rechte', icon: '🛡️' }, { label: 'Logs', icon: '📜' }], tasks: [{ name: 'Neue User anlegen', priority: 'hoch' }, { name: 'Rollen prüfen', priority: 'mittel' }, { name: 'Log-Archiv', priority: 'niedrig' }], stats: [{ label: 'Aktive Nutzer', value: '120' }, { label: 'Admins', value: '5' }, { label: 'Log-Aufbewahrung', value: '30 Tage' }] },
+    { title: '📦 Modul 6 v1.0', desc: 'Deployment', details: [{ label: 'Build', icon: '🏗️' }, { label: 'Test', icon: '🧪' }, { label: 'Release', icon: '🚀' }], tasks: [{ name: 'Build-Pipeline fixen', priority: 'hoch' }, { name: 'Integrationstest', priority: 'mittel' }, { name: 'Dokumentation', priority: 'niedrig' }], stats: [{ label: 'Builds/Woche', value: '4' }, { label: 'Tests bestanden', value: '96%' }, { label: 'Letzter Release', value: 'v1.4' }] },
+    { title: '📦 Modul 7 v1.0', desc: 'Reporting', details: [{ label: 'Berichte', icon: '📊' }, { label: 'Dashboard', icon: '📺' }, { label: 'Export', icon: '📤' }], tasks: [{ name: 'Quartalsbericht', priority: 'hoch' }, { name: 'Dashboard-Update', priority: 'mittel' }, { name: 'CSV-Export', priority: 'niedrig' }], stats: [{ label: 'Berichte', value: '8' }, { label: 'Dashboard-Views', value: '320' }, { label: 'Exports', value: '12' }] },
+    { title: '📦 Modul 8 v1.0', desc: 'AI Training', details: [{ label: 'Daten', icon: '🗂️' }, { label: 'Model', icon: '🤖' }, { label: 'Evaluation', icon: '🧪' }], tasks: [{ name: 'Datensatz sammeln', priority: 'hoch' }, { name: 'Hyperparameter', priority: 'mittel' }, { name: 'Testlauf', priority: 'niedrig' }], stats: [{ label: 'Datensätze', value: '5000' }, { label: 'Modelle', value: '3' }, { label: 'Eval Score', value: '82%' }] },
+    { title: '📦 Modul 9 v1.0', desc: 'Security', details: [{ label: 'Scanning', icon: '🔍' }, { label: 'Patches', icon: '🩹' }, { label: 'Audit', icon: '📋' }], tasks: [{ name: 'Vulnerability Scan', priority: 'hoch' }, { name: 'Patch-Plan', priority: 'mittel' }, { name: 'Audit Bericht', priority: 'niedrig' }], stats: [{ label: 'Scans', value: '7' }, { label: 'Offene Patches', value: '2' }, { label: 'Audits', value: '1' }] },
+    { title: '📦 Modul 10 v1.0', desc: 'Kommunikation', details: [{ label: 'Emails', icon: '✉️' }, { label: 'Chat', icon: '💬' }, { label: 'Meetings', icon: '📅' }], tasks: [{ name: 'Newsletter', priority: 'hoch' }, { name: 'Chatbot warten', priority: 'mittel' }, { name: 'Protokolle archivieren', priority: 'niedrig' }], stats: [{ label: 'Emails heute', value: '54' }, { label: 'Aktive Chats', value: '3' }, { label: 'Meetings geplant', value: '2' }] },
+    { title: '📦 Modul 11 v1.0', desc: 'Analytics', details: [{ label: 'Tracking', icon: '📈' }, { label: 'Segment', icon: '🧮' }, { label: 'Forecast', icon: '🔮' }], tasks: [{ name: 'Tracking Script', priority: 'hoch' }, { name: 'Segmentierung', priority: 'mittel' }, { name: 'Forecast Modell', priority: 'niedrig' }], stats: [{ label: 'Events/Tag', value: '50000' }, { label: 'Segmente', value: '6' }, { label: 'Forecast-Genauigkeit', value: '78%' }] },
+    { title: '📦 Modul 12 v1.0', desc: 'Support', details: [{ label: 'Tickets', icon: '🎫' }, { label: 'FAQ', icon: '❓' }, { label: 'Feedback', icon: '🗣️' }], tasks: [{ name: 'Ticket prüfen', priority: 'hoch' }, { name: 'FAQ aktualisieren', priority: 'mittel' }, { name: 'Feedback sammeln', priority: 'niedrig' }], stats: [{ label: 'Tickets offen', value: '14' }, { label: 'FAQ-Artikel', value: '45' }, { label: 'Feedback/Woche', value: '12' }] }
+  ];
+
+   const grid = document.getElementById('moduleGrid');
+   modules.forEach((mod) => {
+     const main = rand();
+     const detailVals = mod.details.map(() => rand());
+     const box = document.createElement('div');
+     box.className = 'module-box';
+     box.innerHTML = `<div class="modul-title">${mod.title}</div>
+       <div class="modul-desc">${mod.desc}</div>
+       <div class="progress"><div class="progress-bar" style="width:${main}%; color:#fff;">${main}%</div></div>
+       <div class="module-detail"><ul>
+         ${mod.details.map((d, i) => `<li>${d.icon} ${d.label}<div class="detail-progress"><div class="detail-bar" style="width:${detailVals[i]}%; color:#fff;">${detailVals[i]}%</div></div></li>`).join('')}
+       </ul></div>`;
+     box.addEventListener('dblclick', () => openDetail({ ...mod, progress: main, detailVals }));
+     grid.appendChild(box);
+   });
+
+  const priorityIcons = { hoch: '🔴', mittel: '🟠', niedrig: '🟢' };
+  const priorityOrder = { hoch: 1, mittel: 2, niedrig: 3 };
+  function openDetail(mod) {
+    const modal = document.getElementById('detailModal');
+    const tasks = mod.tasks.slice().sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+    modal.innerHTML = `<div class="detail-content">
+      <h2>${mod.title}</h2>
+      <p>${mod.desc}</p>
+      <div class="progress"><div class="progress-bar" style="width:${mod.progress}%; color:#fff;">${mod.progress}%</div></div>
+      <div class="module-detail"><ul>
+        ${mod.details.map((d, i) => `<li>${d.icon} ${d.label}<div class="detail-progress"><div class="detail-bar" style="width:${mod.detailVals[i]}%; color:#fff;">${mod.detailVals[i]}%</div></div></li>`).join('')}
+      </ul></div>
+      <h3>Stats</h3>
+      <ul class="stat-list">
+        ${mod.stats.map((s) => `<li>${s.label}: ${s.value}</li>`).join('')}
+      </ul>
+      <h3>Tasks (Priorität)</h3>
+      <ul class="task-list">
+        ${tasks.map((t) => `<li>${priorityIcons[t.priority]} ${t.name} (${t.priority})</li>`).join('')}
+      </ul>
+    </div>`;
+    modal.style.display = 'flex';
+  }
+   const modal = document.getElementById('detailModal');
+   modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+  </script>
+</body>
 </html>
