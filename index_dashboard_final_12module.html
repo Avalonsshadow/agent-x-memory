@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Agent_X Masterconsole v1.5.8</title>
   <style>
+    :root {
+      --orange: #FF9933;
+      --cyan: #00FFFF;
+      --lime: #99FF33;
+    }
     body {
       margin: 0;
       padding: 0;
       background-color: black;
       font-family: 'Segoe UI', sans-serif;
-      color: #FF9933;
+      color: var(--orange);
       height: 100vh;
       width: 100vw;
       display: flex;
@@ -53,22 +58,20 @@
       flex-direction: column;
       justify-content: flex-start;
       align-items: flex-start;
-      overflow: hidden;
+      overflow: visible;
       width: 100%;
       height: 100%;
       position: relative;
       cursor: pointer;
+      transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
     }
     .module-box:hover {
-      transform: scale(1.5);
       box-shadow: 0 0 30px rgba(255, 200, 100, 1);
-      z-index: 10;
-      overflow: visible;
     }
     .progress {
       height: 1rem;
       background-color: #111;
-      border: 1px solid #FF9933;
+      border: 1px solid var(--orange);
       margin: 0.5rem 0;
       width: 100%;
       text-align: left;
@@ -76,7 +79,7 @@
     }
     .progress-bar {
       height: 100%;
-      background-color: #FF9933;
+      background-color: var(--orange);
       color: #fff;
       font-size: 0.8rem;
       line-height: 1rem;
@@ -105,7 +108,7 @@
     .detail-progress {
       height: 0.5rem;
       background-color: #111;
-      border: 1px solid #FF9933;
+      border: 1px solid var(--orange);
       width: 60%;
       margin-left: 0.5rem;
       text-align: left;
@@ -113,7 +116,7 @@
     }
     .detail-bar {
       height: 100%;
-      background-color: #FF9933;
+      background-color: var(--orange);
       color: #fff;
       font-size: 0.6rem;
       line-height: 0.5rem;
@@ -179,7 +182,8 @@
   </div>
   <div id="detailModal" class="modal"></div>
   <script>
-   const rand = () => Math.floor(60 + Math.random() * 30);
+  const rand = () => Math.floor(60 + Math.random() * 30);
+   const detailColors = ['var(--orange)', 'var(--cyan)', 'var(--lime)'];
    const modules = [
     { title: '📦 Modul 1 v1.0', desc: 'Wissensdatenbank', details: [{ label: 'Sync', icon: '🔄' }, { label: 'Index', icon: '📚' }, { label: 'Backup', icon: '💾' }], tasks: [{ name: 'Import der Chat-Logs', priority: 'hoch' }, { name: 'Duplikate entfernen', priority: 'mittel' }, { name: 'Backup in Drive', priority: 'niedrig' }], stats: [{ label: 'Einträge', value: '2450' }, { label: 'Duplikate', value: '34' }, { label: 'Backup-Zyklus', value: 'täglich' }] },
     { title: '📦 Modul 2 v1.0', desc: 'Projektplanung', details: [{ label: 'Plan', icon: '📝' }, { label: 'Teams', icon: '👥' }, { label: 'Risiken', icon: '⚠️' }], tasks: [{ name: 'Roadmap aktualisieren', priority: 'hoch' }, { name: 'Milestones verteilen', priority: 'mittel' }, { name: 'Risikoanalyse', priority: 'niedrig' }], stats: [{ label: 'Milestones', value: '12' }, { label: 'Offen', value: '3' }, { label: 'Teammitglieder', value: '5' }] },
@@ -205,13 +209,32 @@
        <div class="modul-desc">${mod.desc}</div>
        <div class="progress"><div class="progress-bar" style="width:${main}%; color:#fff;">${main}%</div></div>
        <div class="module-detail"><ul>
-         ${mod.details.map((d, i) => `<li>${d.icon} ${d.label}<div class="detail-progress"><div class="detail-bar" style="width:${detailVals[i]}%; color:#fff;">${detailVals[i]}%</div></div></li>`).join('')}
+         ${mod.details.map((d, i) => `<li><span style="color:${detailColors[i]}">${d.icon}</span> ${d.label}<div class="detail-progress"><div class="detail-bar" style="width:${detailVals[i]}%; background-color:${detailColors[i]}; color:#fff;">${detailVals[i]}%</div></div></li>`).join('')}
        </ul></div>`;
      box.addEventListener('dblclick', () => openDetail({ ...mod, progress: main, detailVals }));
+     box.addEventListener('mouseenter', () => {
+       const scale = 1.3;
+       const rect = box.getBoundingClientRect();
+       const vw = window.innerWidth;
+       const vh = window.innerHeight;
+       const overflowX = (rect.width * scale - rect.width) / 2;
+       const overflowY = (rect.height * scale - rect.height) / 2;
+       let tx = 0, ty = 0;
+       if (rect.left - overflowX < 0) tx = overflowX - rect.left;
+       else if (rect.right + overflowX > vw) tx = vw - rect.right - overflowX;
+       if (rect.top - overflowY < 0) ty = overflowY - rect.top;
+       else if (rect.bottom + overflowY > vh) ty = vh - rect.bottom - overflowY;
+       box.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+       box.style.zIndex = 10;
+     });
+     box.addEventListener('mouseleave', () => {
+       box.style.transform = '';
+       box.style.zIndex = '';
+     });
      grid.appendChild(box);
    });
 
-  const priorityIcons = { hoch: '🔴', mittel: '🟠', niedrig: '🟢' };
+  const priorityColors = { hoch: 'var(--orange)', mittel: 'var(--cyan)', niedrig: 'var(--lime)' };
   const priorityOrder = { hoch: 1, mittel: 2, niedrig: 3 };
   function openDetail(mod) {
     const modal = document.getElementById('detailModal');
@@ -221,15 +244,15 @@
       <p>${mod.desc}</p>
       <div class="progress"><div class="progress-bar" style="width:${mod.progress}%; color:#fff;">${mod.progress}%</div></div>
       <div class="module-detail"><ul>
-        ${mod.details.map((d, i) => `<li>${d.icon} ${d.label}<div class="detail-progress"><div class="detail-bar" style="width:${mod.detailVals[i]}%; color:#fff;">${mod.detailVals[i]}%</div></div></li>`).join('')}
+        ${mod.details.map((d, i) => `<li><span style="color:${detailColors[i]}">${d.icon}</span> ${d.label}<div class="detail-progress"><div class="detail-bar" style="width:${mod.detailVals[i]}%; background-color:${detailColors[i]}; color:#fff;">${mod.detailVals[i]}%</div></div></li>`).join('')}
       </ul></div>
       <h3>Stats</h3>
       <ul class="stat-list">
-        ${mod.stats.map((s) => `<li>${s.label}: ${s.value}</li>`).join('')}
+        ${mod.stats.map((s) => `<li><span style="color:var(--cyan)">⬤</span> ${s.label}: ${s.value}</li>`).join('')}
       </ul>
       <h3>Tasks (Priorität)</h3>
       <ul class="task-list">
-        ${tasks.map((t) => `<li>${priorityIcons[t.priority]} ${t.name} (${t.priority})</li>`).join('')}
+        ${tasks.map((t) => `<li><span style="color:${priorityColors[t.priority]}">⬤</span> ${t.name} (${t.priority})</li>`).join('')}
       </ul>
     </div>`;
     modal.style.display = 'flex';
