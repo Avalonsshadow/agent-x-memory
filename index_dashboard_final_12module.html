@@ -1,5 +1,129 @@
 <!DOCTYPE html>
-<html lang="en">
-<!-- Simulierter Inhalt -->
-<body><h1>LCARS Dashboard Hauptmodul</h1></body>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LCARS · Chatoptimizier Log v1.6 (LCARS-Refined)</title>
+<style>
+  :root{--c-cyan:#2fb7ff;--c-orange:#ff9f1a;--c-lime:#8bdc65;--bg:#0b0e16;--card:#111722;--ink:#eaf4ff;--ink-dim:#b7c6d9;--edge:#1a2231}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+  header{padding:10px 16px;background:linear-gradient(90deg, rgba(47,183,255,.25), transparent);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--edge)}
+  .title{display:flex;align-items:center;gap:.6rem;font-weight:600}
+  .badge{display:inline-block;padding:2px 6px;border-radius:8px;font-size:.8rem}
+  .b-ver{background:var(--edge);color:var(--ink-dim)}
+  .grid{flex:1;display:grid;gap:12px;padding:12px;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr)}
+  .card{background:var(--card);border-radius:12px;padding:10px;display:flex;flex-direction:column;border:1px solid var(--edge)}
+  .accent{height:6px;border-radius:6px;margin-bottom:8px;opacity:.95}
+  .accent.orange{background:var(--c-orange)} .accent.cyan{background:var(--c-cyan)} .accent.lime{background:var(--c-lime)}
+  h3{margin:0 0 8px 0;font-size:1.05rem;display:flex;align-items:center;gap:.4rem;font-weight:700}
+  .bar{height:10px;background:#0b1322;border-radius:999px;overflow:hidden;position:relative;margin:0 0 8px 0}
+  .bar>span{display:block;height:100%}
+  .bar .pct{position:absolute;left:8px;top:-18px;font-size:.75rem;color:var(--ink-dim)}
+  .subcats{display:flex;flex-wrap:wrap;gap:6px}
+  .sub{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:4px 8px;font-size:.82rem;display:inline-flex;align-items:center;gap:.4rem}
+  .sub[data-color="orange"]{border-color:rgba(255,159,26,.55)}
+  .sub[data-color="cyan"]{border-color:rgba(47,183,255,.55)}
+  .sub[data-color="lime"]{border-color:rgba(139,220,101,.55)}
+  .sub .eta{background:var(--c-lime);color:#063;border-radius:6px;padding:1px 6px;font-size:.72rem}
+  .list{list-style:none;margin:8px 0 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .item{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center}
+  .dot{width:8px;height:8px;border-radius:50%}.dot.orange{background:var(--c-orange)}.dot.cyan{background:var(--c-cyan)}.dot.lime{background:var(--c-lime)}
+  .muted{color:var(--ink-dim)}
+  @media (max-width:1200px){.grid{grid-template-columns:repeat(2,1fr)}}@media (max-width:820px){.grid{grid-template-columns:1fr}}
+</style>
+<script>
+  // Data Endpoint (Apps Script)
+  const DATA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwyn7YNLnHkiak3b-3Euqae1_gZZEfiN2Y7S3Qk_T8_CWk_PUnYLQxh155Bx7r6Eh6FWg/exec';
+
+  // Bonus: einfache Filter-Parameter per URL
+  // ?only=offen   → zeigt nur "Offene Punkte"
+  // ?prio=1       → blendet Subcats mit Prio >1 aus
+  const URL_PARAMS = new URLSearchParams(location.search);
+  const ONLY   = (URL_PARAMS.get('only')||'').toLowerCase();   // 'offen' | 'regeln' | ...
+  const PRIO_N = parseInt(URL_PARAMS.get('prio')||'0',10);     // 0 = alle
+</script>
+</head>
+<body>
+  <header>
+    <div class="title">LCARS · Chatoptimizier Log <span class="badge b-ver">v1.6</span></div>
+    <div id="snapshot" class="muted">Snapshot: — · Dateien: — · Agenten: Codex, Sora</div>
+  </header>
+  <div id="grid" class="grid"></div>
+  <script>
+    const accentFor=t=>/Regel/i.test(t)?'cyan':/Version/i.test(t)?'cyan':/Erfolg/i.test(t)?'lime':/Letzte/i.test(t)?'lime':/Offen/i.test(t)?'orange':'orange';
+
+    function keepModuleByOnlyFilter(title){
+      if(!ONLY) return true;
+      const map = {
+        'offen':'Offene Punkte',
+        'regeln':'Regel-Updates',
+        'version':'Versionierung',
+        'aktionen':'Letzte Aktionen',
+        'fokus':'Aktueller Fokus',
+        'erfolg':'Erfolgsquote'
+      };
+      const matchTitle = map[ONLY]||ONLY;
+      return new RegExp(matchTitle,'i').test(title||'');
+    }
+
+    const cardTemplate=m=>{
+      const a=accentFor(m.title||'');
+      const subs=(m.subs||[])
+        .filter(s=>PRIO_N? (+s.prio||3) <= PRIO_N : true)
+        .map(s=>`<span class="sub" data-color="${s.color||a}" data-prio="${s.prio||3}">
+          ${s.label||''}${s.eta?` <span class="eta">${s.eta}</span>`:''}
+        </span>`).join('');
+
+      const todos=(m.todos||[])
+        .filter(t=>PRIO_N? (+t.prio||3) <= PRIO_N : true)
+        .map(t=>`<li class="item">
+          <span class="dot ${t.color||a}"></span>
+          <span>${t.text||''}</span>
+          <span>
+            ${t.prio?`<span class="badge" style="background:#ff9f1a">P${t.prio}</span>`:''}
+            ${t.eta?` <span class="badge" style="background:#8bdc65;color:#063">${t.eta}</span>`:''}
+          </span>
+        </li>`).join('');
+
+      return `<div class="card">
+        <div class="accent ${a}"></div>
+        <h3>${m.title||''}${m.prio?` <span class="badge" style="background:#ff9f1a">P${m.prio}</span>`:''}
+            ${m.eta?` <span class="badge" style="background:#8bdc65;color:#063">${m.eta}</span>`:''}</h3>
+        ${m.progress!=null?`<div class="bar"><span class="pct">${m.progress}%</span>
+           <span style="width:${m.progress}%;background:var(--c-${a});"></span></div>`:''}
+        <div class="subcats">${subs}</div>
+        ${todos?`<ul class="list">${todos}</ul>`:''}
+      </div>`;
+    };
+
+    function render(data){
+      const snap=(data.snapshot?new Date(data.snapshot):new Date())
+        .toLocaleString('de-DE',{timeZone:'Europe/Madrid'});
+      const cnt=data.stats?.fileCount ?? (data.files?.length ?? '—');
+      document.getElementById('snapshot').textContent=`Snapshot: ${snap} · Dateien: ${cnt} · Agenten: Codex, Sora`;
+
+      const modules = (data.modules||[]).filter(m => keepModuleByOnlyFilter(m.title||''));
+      const grid=document.getElementById('grid');
+      grid.innerHTML=modules.map(cardTemplate).join('');
+
+      function setDensity(){
+        const baseW=1300,baseH=800,s=Math.min(innerWidth/baseW,innerHeight/baseH),max=s<.6?4:s<.8?8:16;
+        document.querySelectorAll('.subcats').forEach(sc=>{
+          [...sc.children].sort((a,b)=>(+a.dataset.prio||3)-(+b.dataset.prio||3))
+            .forEach((el,i)=>el.style.display=i<max?'':'none');
+        });
+      }
+      setDensity(); addEventListener('resize', setDensity, {passive:true});
+    }
+
+    async function load(){
+      try{
+        const r=await fetch(DATA_ENDPOINT,{cache:'no-store',mode:'cors'});
+        render(await r.json());
+      }catch(e){ console.error(e); }
+    }
+    load(); setInterval(load,120000);
+  </script>
+</body>
 </html>
