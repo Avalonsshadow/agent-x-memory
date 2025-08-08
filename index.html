@@ -63,17 +63,11 @@
 </footer>
 
 <script>
-  // === KONFIG ===
-  // 👉 Ersetze diese URL durch deine aktuell deployte Apps-Script Web-App URL
-  const DATA_ENDPOINT = 'REPLACE_WITH_YOUR_WEB_APP_URL'; // z.B. https://script.google.com/macros/s/AKfyc.../exec
-  // Falls deine Web-App den Root-Ordner automatisch gesetzt hat, reicht die Basis-URL.
-  // Optional kannst du ?mode=tree explizit anhängen:
+  // === KONFIG (mit deiner URL) ===
+  const DATA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwyn7YNLnHkiak3b-3Euqae1_gZZEfiN2Y7S3Qk_T8_CWk_PUnYLQxh155Bx7r6Eh6FWg/exec';
   const API_URL = DATA_ENDPOINT + (DATA_ENDPOINT.includes('?') ? '&' : '?') + 'mode=tree';
-
-  // Ebene-1 Seite:
   const LEVEL1_URL = './level1.html';
 
-  // Farbwahl pro Modul (Glowfarbe)
   const COLOR_BY_KEY = {
     "AgentX_Deck Commander Central":"cyan",
     "AgentX_Lounge":"cyan",
@@ -86,7 +80,6 @@
     "Agentx_Systems & Security":"cyan"
   };
 
-  // === RENDER ===
   async function load(){
     try{
       const r = await fetch(API_URL, {cache:'no-store', mode:'cors'});
@@ -104,9 +97,7 @@
     while(n>=1024 && i<u.length-1){ n/=1024; i++; }
     return n.toFixed(n>=10?0:1)+' '+u[i];
   }
-
   function percentFromCounts(fileCount){
-    // leichte Heuristik, damit Balken „leben“
     const base = Math.max(20, Math.min(95, Math.round((fileCount % 87) + 8)));
     return base;
   }
@@ -119,13 +110,11 @@
     document.getElementById('meta').textContent = `Snapshot: ${snap} · Quelle: ${data.root?.name || 'AgentX_Ablage'} · Ordner: ${data.children?.length ?? 0}`;
 
     (data.children || []).forEach(mod=>{
-      // Farbe wählen
       const color = COLOR_BY_KEY[mod.name] || 'cyan';
       const pOverall = percentFromCounts(mod.fileCount||0);
       const pInput   = Math.min(100, Math.round(pOverall * 0.92));
       const pSync    = Math.min(100, Math.round(pOverall * 0.84));
       const pStatus  = Math.min(100, Math.round(pOverall * 0.76));
-
       const last = mod.lastUpdated ? new Date(mod.lastUpdated).toLocaleString('de-DE',{timeZone:'Europe/Madrid'}) : '—';
 
       grid.insertAdjacentHTML('beforeend', `
@@ -140,7 +129,7 @@
           <div class="bars" style="margin-top:10px">
             <div class="bar"><span class="b-orange" style="width:${pOverall}%"></span></div>
             <div class="bar"><span class="b-lime"   style="width:${pInput}%"></span></div>
-            <div class="bar"><span class="b-cyan"   style="width:${pSync}%"></span></div>
+            <div class="bar"><span class="b-cyan   " style="width:${pSync}%"></span></div>
             <div class="bar"><span class="b-orange" style="width:${pStatus}%"></span></div>
           </div>
 
@@ -152,11 +141,11 @@
 
   function openLevel1(modName){
     const url = `${LEVEL1_URL}?mod=${modName}`;
-    window.location.href = url; // gleiche Seite (fix & schnell). Wenn du Modal willst: sag Bescheid.
+    window.location.href = url;
   }
 
   load();
-  setInterval(load, 120000); // 2-min Auto-Refresh
+  setInterval(load, 120000);
 </script>
 </body>
 </html>
