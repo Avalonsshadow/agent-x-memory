@@ -5,26 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AgentX LIVE BETA V1.0 · Hauptdashboard v1.7 (Live)</title>
 <style>
-  :root{--bg:#0b0e16;--ink:#eaf4ff;--edge:#1a2231;--cyan:#2fb7ff;--orange:#ff9f1a;--lime:#8bdc65}
+  :root{--bg:#0b0e16;--ink:#eaf4ff;--edge:#1a2231;--cyan:#2fb7ff;--orange:#ff9f1a;--lime:#8bdc65;--panel:#0e1420;--card:#111722}
   *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
-  header{padding:12px 16px;background:linear-gradient(90deg,rgba(47,183,255,.25),transparent);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--edge)}
-  .ver{background:#182233;color:#b7c6d9;border-radius:8px;padding:2px 8px;font-size:.82rem}
-  #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:12px}
-  .card{background:#111722;border:1px solid var(--edge);border-radius:12px;padding:12px;min-height:120px;display:flex;flex-direction:column;gap:6px}
-  .card h3{margin:0 0 4px 0;font-size:1.05rem}
-  .kpi{opacity:.9}
-  .bar{height:10px;background:#0b1322;border-radius:999px;overflow:hidden}
+  header{padding:12px 16px;background:linear-gradient(90deg,rgba(47,183,255,.35),transparent 50%);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--edge)}
+  .ver{background:#172034;color:#b7c6d9;border-radius:999px;padding:2px 10px;font-size:.82rem}
+  #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px}
+  .card{background:var(--card);border:1px solid var(--edge);border-radius:18px;padding:14px;min-height:130px;display:flex;flex-direction:column;gap:8px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.02)}
+  .card h3{margin:0 0 6px 0;font-size:1.08rem;letter-spacing:.2px}
+  .kpi{opacity:.92}
+  .bar{height:12px;background:#0b1322;border-radius:999px;overflow:hidden}
   .bar>span{display:block;height:100%;background:var(--cyan)}
-  .btn{margin-top:auto;align-self:flex-start;background:#1a2231;border:0;color:var(--ink);padding:6px 10px;border-radius:8px;cursor:pointer}
-  .btn:hover{filter:brightness(1.1)}
+  .btn{margin-top:auto;align-self:flex-start;background:#1a2231;border:0;color:var(--ink);padding:8px 12px;border-radius:999px;cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
   /* Modal */
   #lcarsModal{position:fixed;inset:0;display:none;z-index:9999}
   #lcarsModal.show{display:block}
-  .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
-  .panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1100px,90vw);height:min(78vh,680px);background:#111722;border:1px solid var(--edge);border-radius:14px;box-shadow:0 20px 48px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden}
-  .accent{height:6px;background:var(--cyan)}
-  .head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px}
-  .close{all:unset;background:#1a2231;padding:6px 10px;border-radius:8px;cursor:pointer}
+  .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px)}
+  .panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1100px,92vw);height:min(80vh,720px);background:var(--panel);border:1px solid var(--edge);border-radius:18px;box-shadow:0 20px 48px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden}
+  .accent{height:8px;background:var(--cyan)}
+  .head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px}
+  .close{all:unset;background:#1a2231;padding:8px 12px;border-radius:999px;cursor:pointer}
   .body{padding:0;height:100%}
   .drill{width:100%;height:100%;border:0;background:#0b0e16}
   @media (max-width:1200px){#grid{grid-template-columns:repeat(2,1fr)}}
@@ -43,7 +43,6 @@
     <h3>Drive</h3>
     <div class="kpi" id="driveFiles">Dateien: —</div>
     <div class="bar"><span id="driveProgress" style="width:0%"></span></div>
-    <!-- ohne Filter -->
     <button class="btn" onclick="openDrill('Drive Status (Live)','orange', '')">Details</button>
   </div>
 
@@ -52,7 +51,6 @@
     <h3>Offene Punkte</h3>
     <div class="kpi" id="openSummary">P1: — · P2: — · P3: —</div>
     <div class="bar"><span id="openProgress" style="width:0%"></span></div>
-    <!-- nur Offene Punkte, Prio 1 -->
     <button class="btn" onclick="openDrill('Offene Punkte · P1','orange','only=offen&prio=1')">Details</button>
   </div>
 
@@ -60,7 +58,6 @@
   <div class="card" id="cardRules">
     <h3>Regel-Updates</h3>
     <div class="kpi" id="rulesSummary">Einträge: —</div>
-    <!-- nur Regeln -->
     <button class="btn" onclick="openDrill('Regel-Updates','cyan','only=regeln')">Details</button>
   </div>
 
@@ -68,7 +65,6 @@
   <div class="card" id="cardVersion">
     <h3>Versionierung</h3>
     <div class="kpi" id="versionText">—</div>
-    <!-- nur Versionierung -->
     <button class="btn" onclick="openDrill('Versionierung','cyan','only=version')">Details</button>
   </div>
 </div>
@@ -89,7 +85,8 @@
 <script>
   // === 1) KONFIG ===
   const DATA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwyn7YNLnHkiak3b-3Euqae1_gZZEfiN2Y7S3Qk_T8_CWk_PUnYLQxh155Bx7r6Eh6FWg/exec';
-  const LCARS_IFRAME_URL_BASE = 'https://avalonsshadow.github.io/agent-x-memory/chatoptimizier_log_v1_6_lcars_refined.html';
+  // **404-Fix: relative URL (gleicher Ordner wie index.html)**
+  const LCARS_IFRAME_URL_BASE = './chatoptimizier_log_v1_6_lcars_refined.html';
 
   // === 2) LIVE-DATEN LADEN ===
   async function loadData(){
