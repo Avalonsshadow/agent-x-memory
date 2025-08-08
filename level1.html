@@ -80,13 +80,12 @@
 </div>
 
 <script>
-  // URL aus Ebene 0:
   const params = new URLSearchParams(location.search);
   const MOD = decodeURIComponent(params.get('mod')||'—');
   document.getElementById('modName').textContent = MOD;
 
-  // DATA + Drill wie gehabt:
-  const DATA_ENDPOINT = 'REPLACE_WITH_YOUR_WEB_APP_URL';
+  // Deine LIVE-URL hier bereits eingesetzt:
+  const DATA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwyn7YNLnHkiak3b-3Euqae1_gZZEfiN2Y7S3Qk_T8_CWk_PUnYLQxh155Bx7r6Eh6FWg/exec';
   const LCARS_IFRAME_URL_BASE = './chatoptimizier_log_v1_6_lcars_refined.html';
 
   async function loadData(){
@@ -142,3 +141,4 @@
 </script>
 </body>
 </html>
+
