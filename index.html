@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AgentX LIVE BETA V1.0 Hauptdashboard v1.7 (Live)</title>
+<title>AgentX LIVE BETA V1.0 · Hauptdashboard v1.7 (Live)</title>
 <style>
   :root{--bg:#0b0e16;--ink:#eaf4ff;--edge:#1a2231;--cyan:#2fb7ff;--orange:#ff9f1a;--lime:#8bdc65}
   *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
@@ -38,30 +38,38 @@
 </header>
 
 <div id="grid">
+  <!-- Karte 1: Drive -->
   <div class="card" id="cardDrive">
     <h3>Drive</h3>
     <div class="kpi" id="driveFiles">Dateien: —</div>
     <div class="bar"><span id="driveProgress" style="width:0%"></span></div>
-    <button class="btn" onclick="openDrill('Drive Status (Live)','orange', LCARS_IFRAME_URL, this)">Details</button>
+    <!-- ohne Filter -->
+    <button class="btn" onclick="openDrill('Drive Status (Live)','orange', '')">Details</button>
   </div>
 
+  <!-- Karte 2: Offene Punkte -->
   <div class="card" id="cardOpen">
     <h3>Offene Punkte</h3>
     <div class="kpi" id="openSummary">P1: — · P2: — · P3: —</div>
     <div class="bar"><span id="openProgress" style="width:0%"></span></div>
-    <button class="btn" onclick="openDrill('Offene Punkte','orange', LCARS_IFRAME_URL, this)">Details</button>
+    <!-- nur Offene Punkte, Prio 1 -->
+    <button class="btn" onclick="openDrill('Offene Punkte · P1','orange','only=offen&prio=1')">Details</button>
   </div>
 
+  <!-- Karte 3: Regel-Updates -->
   <div class="card" id="cardRules">
     <h3>Regel-Updates</h3>
     <div class="kpi" id="rulesSummary">Einträge: —</div>
-    <button class="btn" onclick="openDrill('Regeln','cyan', LCARS_IFRAME_URL, this)">Details</button>
+    <!-- nur Regeln -->
+    <button class="btn" onclick="openDrill('Regel-Updates','cyan','only=regeln')">Details</button>
   </div>
 
+  <!-- Karte 4: Versionierung -->
   <div class="card" id="cardVersion">
     <h3>Versionierung</h3>
     <div class="kpi" id="versionText">—</div>
-    <button class="btn" onclick="openDrill('Versionierung','cyan', LCARS_IFRAME_URL, this)">Details</button>
+    <!-- nur Versionierung -->
+    <button class="btn" onclick="openDrill('Versionierung','cyan','only=version')">Details</button>
   </div>
 </div>
 
@@ -81,7 +89,7 @@
 <script>
   // === 1) KONFIG ===
   const DATA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwyn7YNLnHkiak3b-3Euqae1_gZZEfiN2Y7S3Qk_T8_CWk_PUnYLQxh155Bx7r6Eh6FWg/exec';
-  const LCARS_IFRAME_URL = 'https://avalonsshadow.github.io/agent-x-memory/chatoptimizier_log_v1_6_lcars_refined.html';
+  const LCARS_IFRAME_URL_BASE = 'https://avalonsshadow.github.io/agent-x-memory/chatoptimizier_log_v1_6_lcars_refined.html';
 
   // === 2) LIVE-DATEN LADEN ===
   async function loadData(){
@@ -132,24 +140,17 @@
   loadData();
   setInterval(loadData, 120000);
 
-  // === 4) MODAL (iframe Drilldown) ===
-  function openDrill(title, color, url, fromEl){
+  // === 4) MODAL (iFrame Drilldown) — mit Parametern ===
+  function openDrill(title, color, queryParams){
     document.getElementById('modalTitle').textContent = title;
     document.getElementById('accent').style.background =
       (color==='orange'? 'var(--orange)': color==='lime'? 'var(--lime)': 'var(--cyan)');
-    document.getElementById('modalBody').innerHTML = `<iframe class="drill" src="${url}" loading="lazy"></iframe>`;
+
+    const url = LCARS_IFRAME_URL_BASE + (queryParams ? ('?' + queryParams) : '');
+    document.getElementById('modalBody').innerHTML =
+      `<iframe class="drill" id="lcarsFrame" src="${url}" loading="lazy"></iframe>`;
 
     const modal=document.getElementById('lcarsModal');
-    if(fromEl){
-      const r=fromEl.getBoundingClientRect();
-      const cx=innerWidth/2, cy=innerHeight/2;
-      const panel=modal.querySelector('.panel');
-      panel.animate(
-        [{transform:`translate(${r.left+r.width/2-cx}px,${r.top+r.height/2-cy}px)`,opacity:.0},
-         {transform:'translate(0,0)',opacity:1}],
-        {duration:220,easing:'ease-out'}
-      );
-    }
     modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
     document.addEventListener('keydown', escClose);
   }
