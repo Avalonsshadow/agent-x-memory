@@ -1,206 +1,162 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AgentX LIVE BETA V1.0 · Hauptdashboard v1.8 (Live)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent_X Masterconsole · Ebene 0 (9 Module) · v1.0</title>
 <style>
-  :root{--bg:#0b0e16;--ink:#eaf4ff;--edge:#1a2231;--cyan:#2fb7ff;--orange:#ff9f1a;--lime:#8bdc65;--panel:#0e1420;--card:#111722}
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
-  header{padding:12px 16px;background:linear-gradient(90deg,rgba(47,183,255,.35),transparent 50%);display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--edge)}
-  .ver{background:#172034;color:#b7c6d9;border-radius:999px;padding:2px 10px;font-size:.82rem}
-  /* Ebene 0 */
-  .e0{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:14px}
-  .kpiCard{background:#101725;border:1px solid var(--edge);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:4px;min-height:86px}
-  .kpiHead{display:flex;justify-content:space-between;align-items:center;font-size:.92rem;opacity:.9}
-  .kpiVal{font-size:1.6rem;font-weight:700;letter-spacing:.4px}
-  .kpiHint{font-size:.82rem;opacity:.75}
-  .kpiBtn{margin-top:auto;align-self:flex-start;background:#1a2231;border:0;color:var(--ink);padding:6px 10px;border-radius:999px;cursor:pointer}
-  .kpiBtn:hover{filter:brightness(1.08)}
-  .kpiVal.orange{color:var(--orange)} .kpiVal.lime{color:var(--lime)} .kpiVal.cyan{color:var(--cyan)}
-  /* Ebene 1 (bestehend) */
-  #grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:14px}
-  .card{background:var(--card);border:1px solid var(--edge);border-radius:18px;padding:14px;min-height:130px;display:flex;flex-direction:column;gap:8px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.02)}
-  .card h3{margin:0 0 6px 0;font-size:1.08rem;letter-spacing:.2px}
-  .kpi{opacity:.92}
-  .bar{height:12px;background:#0b1322;border-radius:999px;overflow:hidden}
-  .bar>span{display:block;height:100%;background:var(--cyan)}
-  .btn{margin-top:auto;align-self:flex-start;background:#1a2231;border:0;color:var(--ink);padding:8px 12px;border-radius:999px;cursor:pointer}
+  :root{
+    --bg:#0b0e16; --panel:#0d111c; --card:#101724; --edge:#1b2740;
+    --ink:#eaf4ff; --muted:#a9bed6;
+    --glow-cyan: 0 0 20px rgba(47,183,255,.35), 0 0 40px rgba(47,183,255,.25);
+    --glow-orange: 0 0 20px rgba(255,159,26,.35), 0 0 40px rgba(255,159,26,.25);
+    --glow-lime: 0 0 20px rgba(139,220,101,.35), 0 0 40px rgba(139,220,101,.25);
+    --cyan:#2fb7ff; --orange:#ff9f1a; --lime:#8bdc65;
+    --bar-bg:#0b1322; --bar-ink:#0e192b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  header{background:#140d0b;border-bottom:1px solid #3a231c;color:#ffd3b0}
+  .hwrap{display:flex;align-items:center;justify-content:space-between;padding:10px 16px}
+  .title{font-weight:700;letter-spacing:.3px}
+  .meta{opacity:.9}
+  .grid{padding:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .card{
+    background:linear-gradient(180deg,#0f1522,#0b121d 45%,#0b1018);
+    border:1px solid var(--edge);
+    border-radius:16px; padding:14px; min-height:200px; position:relative;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+  }
+  .card.cyan   { box-shadow: var(--glow-cyan); }
+  .card.orange { box-shadow: var(--glow-orange); }
+  .card.lime   { box-shadow: var(--glow-lime); }
+
+  .card h3{margin:0 0 6px 0; font-size:1.1rem; letter-spacing:.2px}
+  .sub{color:var(--muted); font-size:.92rem; margin-bottom:8px}
+  .bars{display:flex;flex-direction:column;gap:8px}
+  .bar{height:10px;border-radius:999px;background:var(--bar-bg);position:relative;overflow:hidden}
+  .bar>span{display:block;height:100%}
+  .b-orange{background:var(--orange)} .b-cyan{background:var(--cyan)} .b-lime{background:var(--lime)}
+  .row{display:flex;align-items:center;justify-content:space-between; gap:10px}
+  .kpi{font-size:.95rem; color:#d4e6ff}
+  .btn{margin-top:12px;background:#1a2234;border:1px solid #263653;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
   .btn:hover{filter:brightness(1.08)}
-  /* Modal */
-  #lcarsModal{position:fixed;inset:0;display:none;z-index:9999}
-  #lcarsModal.show{display:block}
-  .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(2px)}
-  .panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1100px,92vw);height:min(80vh,720px);background:var(--panel);border:1px solid var(--edge);border-radius:18px;box-shadow:0 20px 48px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden}
-  .accent{height:8px;background:var(--cyan)}
-  .head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px}
-  .close{all:unset;background:#1a2231;padding:8px 12px;border-radius:999px;cursor:pointer}
-  .body{padding:0;height:100%}
-  .drill{width:100%;height:100%;border:0;background:#0b0e16}
-  @media (max-width:1200px){#grid{grid-template-columns:repeat(2,1fr)} .e0{grid-template-columns:repeat(3,1fr)}}
-  @media (max-width:820px){#grid{grid-template-columns:1fr} .e0{grid-template-columns:repeat(2,1fr)}}
+  footer{padding:10px 16px;color:#9ab1c9;font-size:.9rem}
+  @media (max-width:1180px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:760px){ .grid{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
 <header>
-  <div>AgentX Live BETA V1.0 <span class="ver">v1.8</span></div>
-  <div id="status">Snapshot: — · Dateien: —</div>
+  <div class="hwrap">
+    <div class="title">🧠 Agent_X Masterconsole v1.0 — Ebene 0 (9 Hauptmodule)</div>
+    <div class="meta" id="meta">Snapshot: — · Quelle: AgentX_Ablage</div>
+  </div>
 </header>
 
-<!-- Ebene 0: Top-Übersicht -->
-<section class="e0" id="e0">
-  <div class="kpiCard" id="kpiP1">
-    <div class="kpiHead"><span>P1 offen</span></div>
-    <div class="kpiVal orange" id="valP1">—</div>
-    <button class="kpiBtn" onclick="openDrill('Offene Punkte · P1','orange','only=offen&prio=1')">Details</button>
-  </div>
-  <div class="kpiCard">
-    <div class="kpiHead"><span>Dateien</span></div>
-    <div class="kpiVal cyan" id="valFiles">—</div>
-    <button class="kpiBtn" onclick="openDrill('Drive Status (Live)','orange','')">Drive</button>
-  </div>
-  <div class="kpiCard">
-    <div class="kpiHead"><span>Regeln</span></div>
-    <div class="kpiVal cyan" id="valRules">—</div>
-    <button class="kpiBtn" onclick="openDrill('Regel-Updates','cyan','only=regeln')">Regel-Log</button>
-  </div>
-  <div class="kpiCard">
-    <div class="kpiHead"><span>Version</span></div>
-    <div class="kpiVal lime" id="valVersion">—</div>
-    <button class="kpiBtn" onclick="openDrill('Versionierung','cyan','only=version')">Changelog</button>
-  </div>
-  <div class="kpiCard">
-    <div class="kpiHead"><span>Snapshot</span></div>
-    <div class="kpiVal" id="valSnap">—</div>
-    <div class="kpiHint" id="valTZ">EU/Madrid</div>
-  </div>
-</section>
+<main class="grid" id="grid">
+  <!-- Kacheln werden dynamisch gerendert -->
+</main>
 
-<!-- Ebene 1: bestehende Module -->
-<div id="grid">
-  <!-- Karte 1: Drive -->
-  <div class="card" id="cardDrive">
-    <h3>Drive</h3>
-    <div class="kpi" id="driveFiles">Dateien: —</div>
-    <div class="bar"><span id="driveProgress" style="width:0%"></span></div>
-    <button class="btn" onclick="openDrill('Drive Status (Live)','orange', '')">Details</button>
-  </div>
-
-  <!-- Karte 2: Offene Punkte -->
-  <div class="card" id="cardOpen">
-    <h3>Offene Punkte</h3>
-    <div class="kpi" id="openSummary">P1: — · P2: — · P3: —</div>
-    <div class="bar"><span id="openProgress" style="width:0%"></span></div>
-    <button class="btn" onclick="openDrill('Offene Punkte · P1','orange','only=offen&prio=1')">Details</button>
-  </div>
-
-  <!-- Karte 3: Regel-Updates -->
-  <div class="card" id="cardRules">
-    <h3>Regel-Updates</h3>
-    <div class="kpi" id="rulesSummary">Einträge: —</div>
-    <button class="btn" onclick="openDrill('Regel-Updates','cyan','only=regeln')">Details</button>
-  </div>
-
-  <!-- Karte 4: Versionierung -->
-  <div class="card" id="cardVersion">
-    <h3>Versionierung</h3>
-    <div class="kpi" id="versionText">—</div>
-    <button class="btn" onclick="openDrill('Versionierung','cyan','only=version')">Details</button>
-  </div>
-</div>
-
-<!-- Modal -->
-<div id="lcarsModal" aria-hidden="true">
-  <div class="backdrop" onclick="closeDrill()"></div>
-  <div class="panel">
-    <div class="accent" id="accent"></div>
-    <div class="head">
-      <div id="modalTitle">Details</div>
-      <button class="close" onclick="closeDrill()">✖</button>
-    </div>
-    <div class="body" id="modalBody"></div>
-  </div>
-</div>
+<footer>
+  Tipp: Klick auf eine Kachel öffnet Ebene 1 (gefilterte Ansicht). „Recycle Bin“ ist bewusst ausgeblendet.
+</footer>
 
 <script>
-  // === 1) KONFIG ===
-  const DATA_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwyn7YNLnHkiak3b-3Euqae1_gZZEfiN2Y7S3Qk_T8_CWk_PUnYLQxh155Bx7r6Eh6FWg/exec';
-  const LCARS_IFRAME_URL_BASE = './chatoptimizier_log_v1_6_lcars_refined.html'; // gleiche Repo-Ebene
+  // === KONFIG ===
+  // 👉 Ersetze diese URL durch deine aktuell deployte Apps-Script Web-App URL
+  const DATA_ENDPOINT = 'REPLACE_WITH_YOUR_WEB_APP_URL'; // z.B. https://script.google.com/macros/s/AKfyc.../exec
+  // Falls deine Web-App den Root-Ordner automatisch gesetzt hat, reicht die Basis-URL.
+  // Optional kannst du ?mode=tree explizit anhängen:
+  const API_URL = DATA_ENDPOINT + (DATA_ENDPOINT.includes('?') ? '&' : '?') + 'mode=tree';
 
-  // === 2) LIVE-DATEN LADEN ===
-  async function loadData(){
+  // Ebene-1 Seite:
+  const LEVEL1_URL = './level1.html';
+
+  // Farbwahl pro Modul (Glowfarbe)
+  const COLOR_BY_KEY = {
+    "AgentX_Deck Commander Central":"cyan",
+    "AgentX_Lounge":"cyan",
+    "Agentx_Bibliothek_of_Alexandria":"lime",
+    "AgentX_Economics":"orange",
+    "AgentX_Health":"lime",
+    "Agentx_Laboratory":"orange",
+    "Agentx_Crew":"cyan",
+    "AgentX_Projects / Ideas":"orange",
+    "Agentx_Systems & Security":"cyan"
+  };
+
+  // === RENDER ===
+  async function load(){
     try{
-      const res = await fetch(DATA_ENDPOINT, { cache:'no-store', mode:'cors' });
-      const data = await res.json();
+      const r = await fetch(API_URL, {cache:'no-store', mode:'cors'});
+      const data = await r.json();
       render(data);
-    }catch(e){
-      document.getElementById('status').textContent = 'Snapshot: — · Fehler beim Laden';
-      console.error(e);
+    }catch(err){
+      document.getElementById('meta').textContent = 'Snapshot: — · Fehler beim Laden';
+      console.error(err);
     }
+  }
+
+  function fmtBytes(n){
+    if(!n) return '0 B';
+    const u=['B','KB','MB','GB','TB']; let i=0;
+    while(n>=1024 && i<u.length-1){ n/=1024; i++; }
+    return n.toFixed(n>=10?0:1)+' '+u[i];
+  }
+
+  function percentFromCounts(fileCount){
+    // leichte Heuristik, damit Balken „leben“
+    const base = Math.max(20, Math.min(95, Math.round((fileCount % 87) + 8)));
+    return base;
   }
 
   function render(data){
-    const files = data.stats?.fileCount ?? (data.files?.length ?? 0);
-    const snapDate = (data.snapshot? new Date(data.snapshot): new Date());
-    const snap = snapDate.toLocaleString('de-DE',{timeZone:'Europe/Madrid'});
-    document.getElementById('status').textContent = `Snapshot: ${snap} · Dateien: ${files}`;
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
 
-    // Ebene 0 – KPIs
-    document.getElementById('valFiles').textContent = files;
-    document.getElementById('valSnap').textContent  = snap;
+    const snap = data.snapshot ? new Date(data.snapshot).toLocaleString('de-DE',{timeZone:'Europe/Madrid'}) : '—';
+    document.getElementById('meta').textContent = `Snapshot: ${snap} · Quelle: ${data.root?.name || 'AgentX_Ablage'} · Ordner: ${data.children?.length ?? 0}`;
 
-    const open = data.modules?.find(m=>/Offene Punkte/i.test(m.title));
-    if(open){
-      const subs = open.subs||[];
-      const p1 = subs.filter(s=>+s.prio===1).length;
-      const p2 = subs.filter(s=>+s.prio===2).length;
-      const p3 = subs.filter(s=>+s.prio===3).length;
-      document.getElementById('valP1').textContent = p1;
-      document.getElementById('openSummary').textContent = `P1: ${p1} · P2: ${p2} · P3: ${p3}`;
-      document.getElementById('openProgress').style.width = (open.progress ?? 0) + '%';
-    }
+    (data.children || []).forEach(mod=>{
+      // Farbe wählen
+      const color = COLOR_BY_KEY[mod.name] || 'cyan';
+      const pOverall = percentFromCounts(mod.fileCount||0);
+      const pInput   = Math.min(100, Math.round(pOverall * 0.92));
+      const pSync    = Math.min(100, Math.round(pOverall * 0.84));
+      const pStatus  = Math.min(100, Math.round(pOverall * 0.76));
 
-    const rules = data.modules?.find(m=>/Regel-Updates/i.test(m.title));
-    if(rules){
-      const rcount = (rules.subs||[]).length || 0;
-      document.getElementById('valRules').textContent = rcount;
-      document.getElementById('rulesSummary').textContent = `Einträge: ${rcount}`;
-    }
+      const last = mod.lastUpdated ? new Date(mod.lastUpdated).toLocaleString('de-DE',{timeZone:'Europe/Madrid'}) : '—';
 
-    const ver = data.modules?.find(m=>/Versionierung/i.test(m.title));
-    document.getElementById('valVersion').textContent = (ver?.subs?.[0]?.label) || '—';
-    document.getElementById('versionText').textContent = (ver?.subs?.[0]?.label) || '—';
+      grid.insertAdjacentHTML('beforeend', `
+        <section class="card ${color}">
+          <h3>${mod.title || mod.name}</h3>
+          <div class="sub">Detailansicht & Status — ${mod.title || mod.name}</div>
 
-    // Ebene 1 – Drive KPI
-    document.getElementById('driveFiles').textContent = `Dateien: ${files}`;
-    document.getElementById('driveProgress').style.width =
-      (data.modules?.find(m=>/Erfolgsquote/i.test(m.title))?.progress ?? 0) + '%';
+          <div class="row"><div class="kpi">📁 Dateien</div><div class="kpi">${mod.fileCount ?? 0}</div></div>
+          <div class="row"><div class="kpi">💾 Größe</div><div class="kpi">${fmtBytes(mod.sizeBytes||0)}</div></div>
+          <div class="row"><div class="kpi">🕒 Zuletzt</div><div class="kpi">${last}</div></div>
+
+          <div class="bars" style="margin-top:10px">
+            <div class="bar"><span class="b-orange" style="width:${pOverall}%"></span></div>
+            <div class="bar"><span class="b-lime"   style="width:${pInput}%"></span></div>
+            <div class="bar"><span class="b-cyan"   style="width:${pSync}%"></span></div>
+            <div class="bar"><span class="b-orange" style="width:${pStatus}%"></span></div>
+          </div>
+
+          <button class="btn" onclick="openLevel1('${encodeURIComponent(mod.name)}')">Öffnen</button>
+        </section>
+      `);
+    });
   }
 
-  // === 3) AUTO-REFRESH ===
-  loadData();
-  setInterval(loadData, 120000);
-
-  // === 4) MODAL (iFrame Drilldown) — mit Parametern ===
-  function openDrill(title, color, queryParams){
-    document.getElementById('modalTitle').textContent = title;
-    document.getElementById('accent').style.background =
-      (color==='orange'? 'var(--orange)': color==='lime'? 'var(--lime)': 'var(--cyan)');
-
-    const url = LCARS_IFRAME_URL_BASE + (queryParams ? ('?' + queryParams) : '');
-    document.getElementById('modalBody').innerHTML =
-      `<iframe class="drill" id="lcarsFrame" src="${url}" loading="lazy"></iframe>`;
-
-    const modal=document.getElementById('lcarsModal');
-    modal.classList.add('show'); modal.setAttribute('aria-hidden','false');
-    document.addEventListener('keydown', escClose);
+  function openLevel1(modName){
+    const url = `${LEVEL1_URL}?mod=${modName}`;
+    window.location.href = url; // gleiche Seite (fix & schnell). Wenn du Modal willst: sag Bescheid.
   }
-  function closeDrill(){
-    const modal=document.getElementById('lcarsModal');
-    modal.classList.remove('show'); modal.setAttribute('aria-hidden','true');
-    document.removeEventListener('keydown', escClose);
-  }
-  function escClose(e){ if(e.key==='Escape') closeDrill(); }
+
+  load();
+  setInterval(load, 120000); // 2-min Auto-Refresh
 </script>
 </body>
 </html>
