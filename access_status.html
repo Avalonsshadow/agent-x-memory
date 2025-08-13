@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AGENT_X • ACCESS STATUS • v1.0</title>
+<style>
+  :root{ --bg:#0b0f14; --panel:#141b22; --text:#e9f0f7; --muted:#9fb0c3; --ok:#00d47e; --block:#ff4d5a; --start:#3aa0ff; }
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;background:radial-gradient(1200px 800px at 80% -10%, #14202b 0%, var(--bg) 55%);
+       color:var(--text);font:16px/1.45 Inter,system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:linear-gradient(90deg,#a4c8ff,#c6a9ff);color:#161d26;font-weight:900}
+  .shell{display:grid;grid-template-columns:1fr 1fr;gap:14px;height:calc(100% - 64px);padding:12px}
+  .panel{background:var(--panel);border:1px solid #263646;border-radius:18px;box-shadow:0 18px 45px rgba(0,0,0,.45);padding:12px;overflow:auto}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid #2b3a49;padding:8px 10px;text-align:left;font-size:14px}
+  th{position:sticky;top:0;background:#101820}
+  .btn{background:#1a2330;color:var(--text);border:1px solid #2c3a48;padding:9px 14px;border-radius:12px;cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <div>AGENT_X • ACCESS STATUS <span style="opacity:.75">v1.0</span></div>
+  <div>
+    <button class="btn" id="btnRefresh">Refresh</button>
+  </div>
+</header>
+<section class="shell">
+  <div class="panel">
+    <div style="font-weight:900;margin-bottom:6px">Freigegebene Inhalte</div>
+    <table id="tblOk"><thead><tr><th>Name</th><th>Typ</th><th>Größe</th><th>Pfad</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div class="panel">
+    <div style="font-weight:900;margin-bottom:6px">Fehlende Freigaben / Blocker</div>
+    <table id="tblMiss"><thead><tr><th>Name</th><th>Typ</th><th>Grund</th><th>Aktion</th></tr></thead><tbody></tbody></table>
+  </div>
+</section>
+<script>
+const WEBHOOK_URL = 'REPLACE_WITH_YOUR_EXEC_URL';
+const $ = sel => document.querySelector(sel);
+async function jget(u){ const r=await fetch(u,{cache:'no-store'}); return r.json(); }
+function row(cells){ const tr=document.createElement('tr'); cells.forEach(h=>{ const td=document.createElement('td'); if(h && h.__html){ td.innerHTML = h.__html; } else { td.textContent = h==null?'':h; } tr.appendChild(td); }); return tr; }
+async function refresh(){
+  const d = await jget(WEBHOOK_URL+'?cmd=access');
+  const ok = d?.ok||[]; const miss=d?.missing||[];
+  const tbOk = $("#tblOk tbody"); const tbMiss=$("#tblMiss tbody");
+  tbOk.innerHTML=''; tbMiss.innerHTML='';
+  ok.forEach(x=> tbOk.appendChild(row([x.name,x.mime,(x.size_mb||0)+' MB',x.path])));
+  miss.forEach(x=> tbMiss.appendChild(row([x.name,x.mime,x.reason,{__html:`<button class="btn" data-id="${x.id}" data-cmd="${x.suggest||'share'}">Fix</button>`}])));
+  document.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.onclick = async (e)=>{
+      const id = e.target.getAttribute('data-id');
+      const cmd = e.target.getAttribute('data-cmd');
+      try{ await jget(WEBHOOK_URL+`?cmd=fix&id=${encodeURIComponent(id)}&mode=${encodeURIComponent(cmd)}`); await refresh(); }catch(err){ console.error(err); }
+    };
+  });
+}
+document.getElementById('btnRefresh').onclick=refresh;
+(async()=>{ await refresh(); })();
+</script>
+</body>
+</html>

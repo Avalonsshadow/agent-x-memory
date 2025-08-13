@@ -1,0 +1,2 @@
+/* same orchestrator as before, shortened here for brevity in this cell */
+function doGet(e){ return ContentService.createTextOutput(JSON.stringify({ok:true, note:"Stub for demo"})).setMimeType(ContentService.MimeType.JSON); }

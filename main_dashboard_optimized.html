@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AGENT_X • LCARS DASHBOARD v2.2 • Optimized</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#141b22; --text:#e9f0f7; --muted:#9fb0c3;
+    --ok:#00d47e; --start:#3aa0ff; --block:#ff4d5a;
+    --accentA:#ff9a66; --accentB:#ffcc66; --accentC:#8ec5ff; --accentD:#c6a9ff;
+    --shadow:0 18px 45px rgba(0,0,0,.45); --radius:22px;
+    --glow-ok:0 0 18px rgba(0,212,126,.35);
+    --glow-start:0 0 18px rgba(58,160,255,.35);
+    --glow-block:0 0 18px rgba(255,77,90,.4);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:radial-gradient(1200px 800px at 80% -10%, #14202b 0%, var(--bg) 55%);
+       color:var(--text);font:16px/1.45 Inter,system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
+  header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;
+         background:linear-gradient(90deg,#f8a85a,#ffc06a);color:#161d26;font-weight:900}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .badge{background:#1c2631;border:1px solid #2b3a49;color:#fff;padding:8px 12px;border-radius:12px;white-space:nowrap}
+  .btn{background:#1a2330;color:var(--text);border:1px solid #2c3a48;padding:9px 14px;border-radius:12px;cursor:pointer}
+  .btn:hover{transform:translateY(-1px)}
+  .btn[disabled]{opacity:.65;cursor:progress}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:rot .8s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .timer{font-weight:800;margin-left:8px}
+
+  .shell{display:grid;grid-template-columns:340px 1fr;gap:14px;height:calc(100% - 58px)}
+  @media (max-width:1100px){.shell{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid #263646;border-radius:18px;box-shadow:var(--shadow);padding:12px;overflow:auto}
+  .log{white-space:pre-wrap;font-family:ui-monospace,Consolas,monaco,monospace;min-height:140px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;overflow:auto;padding:6px}
+  @media (max-width:1300px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+
+  .card{--accent:var(--accentA);background:#101820;border:1px solid #2b3a49;border-radius:18px;padding:14px;min-height:150px;position:relative;overflow:hidden;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:linear-gradient(180deg,var(--accent),transparent)}
+  .card.ok{box-shadow:var(--shadow), var(--glow-ok)}
+  .card.start{box-shadow:var(--shadow), var(--glow-start)}
+  .card.block{box-shadow:var(--shadow), var(--glow-block)}
+  .title{font-weight:900;margin-bottom:6px}
+  .meta{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:8px}
+  .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+  .dot.start{background:var(--start)} .dot.ok{background:var(--ok)} .dot.block{background:var(--block)}
+  .bar{height:14px;background:#0b1218;border:1px solid #243243;border-radius:9px;overflow:hidden;margin-top:10px}
+  .bar>span{display:block;height:100%}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
+  .bubble{background:#0e151c;border:1px solid #2a3a4a;border-radius:18px;max-width:940px;width:min(940px,96%);box-shadow:0 20px 60px rgba(0,0,0,.6);padding:14px;position:relative}
+  .close{position:absolute;right:10px;top:10px;cursor:pointer;background:#15202b;border:1px solid #2b3a49;border-radius:8px;padding:6px 8px;color:#fff}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:740px){.row2{grid-template-columns:1fr}}
+  .kv{background:#0f151c;border:1px solid #203040;border-radius:14px;padding:10px}
+
+  .banner{display:none;margin:8px 0 0 0;padding:10px;border-radius:10px;border:1px solid #4a2b2f;background:#2a1517}
+  .banner.show{display:block}
+  .small{font-size:12px;color:var(--muted)}
+
+</style>
+</head>
+<body>
+<header>
+  <div>AGENT_X • LCARS DASHBOARD <span style="opacity:.75">v2.2 • Optimized</span></div>
+  <div class="row">
+    <span class="badge" id="pathInfo">Quelle: G:\\Mi unidad\\AgentX_Ablage</span>
+    <button class="btn" id="btnSeed">Seed</button>
+    <button class="btn" id="btnSync">Sync</button>
+    <button class="btn" id="btnCsv">CSV-Import</button>
+    <button class="btn" id="btnFull">Full-Cycle</button>
+    <button class="btn" id="btnUpd">Update<span class="timer" id="timer"></span></button>
+    <button class="btn" id="btnAccess">Access-Status</button>
+    <button class="btn" id="btnReport">Extractor-Report</button>
+    <label class="badge" style="cursor:pointer"><input id="auto" type="checkbox" style="vertical-align:-2px;margin-right:6px">Auto-Refresh</label>
+  </div>
+</header>
+
+<section class="shell">
+  <aside class="panel">
+    <div style="font-weight:900">STATUS-LOG</div>
+    <div class="small" id="ts"></div>
+    <div id="err" class="banner"></div>
+    <pre class="log" id="log">–</pre>
+    <div class="panel" style="margin-top:12px">
+      Klick auf eine Kachel → Detail-Bubble (Ebene 2). „Modul öffnen (lokal)” ist der Hook für Ebene 3 (index.html je Modul).
+    </div>
+  </aside>
+  <main class="grid" id="grid" aria-live="polite"></main>
+</section>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="bTitle">
+  <article class="bubble">
+    <button class="close" id="bClose" aria-label="Schließen">✕</button>
+    <div id="bTitle" class="title" style="font-size:20px">Titel</div>
+    <div id="bMeta" class="small">–</div>
+    <div class="row2" style="margin-top:10px">
+      <div class="kv">
+        <div style="font-weight:800">Fortschritt</div>
+        <div class="bar" style="margin-top:8px"><span id="bProg" style="width:0%;background:var(--start)"></span></div>
+      </div>
+      <div class="kv">
+        <div style="font-weight:800">Zugriff</div>
+        <div class="small" id="bAccess" style="margin-top:8px">–</div>
+      </div>
+      <div class="kv" style="grid-column:1/-1">
+        <div style="font-weight:800">Top-Infos</div>
+        <ul id="bStops" style="margin:8px 0 0 18px"></ul>
+      </div>
+      <div class="kv" style="grid-column:1/-1">
+        <div style="font-weight:800">Aktionen</div>
+        <div style="margin-top:8px" class="row">
+          <a id="bOpen" class="btn" href="#" target="_blank" rel="noopener">Modul öffnen (lokal)</a>
+        </div>
+      </div>
+    </div>
+  </article>
+</div>
+
+<script>
+const WEBHOOK_URL = 'REPLACE_WITH_YOUR_EXEC_URL';
+const $ = id => document.getElementById(id);
+const banner = (msg)=>{ const b=$('err'); if(!msg){b.classList.remove('show'); b.textContent=''; return;} b.textContent=msg; b.classList.add('show'); };
+const log = (obj,label='')=>{
+  const ts = new Date().toLocaleString('de-DE');
+  const txt = (typeof obj==='string')?obj:JSON.stringify(obj,null,2);
+  $('log').textContent = `${ts}\n${label?label+': ':''}${txt}\n\n` + $('log').textContent.slice(0,15000);
+  $('ts').textContent = ts;
+  banner('');
+};
+function busy(btn,on=true){ if(!btn) return; if(on){btn.disabled=true; btn._t=btn.textContent; btn.innerHTML='<span class="spin"></span>'+btn._t;}else{btn.disabled=false; btn.textContent=btn._t||btn.textContent;} }
+function pct(n){ n=Number(n||0); return Math.max(0,Math.min(100,Math.round(n))); }
+async function jget(url){
+  const r = await fetch(url,{cache:'no-store'});
+  const ct = (r.headers.get('content-type')||'');
+  if(!r.ok){ throw new Error('HTTP '+r.status); }
+  return ct.includes('json')? r.json(): r.text();
+}
+const grid = $('grid');
+function statusLabel(s){ return s==='ok'?'ok':(s==='block'?'Blocker':'Beginn'); }
+function statusClass(s){ return s==='ok'?'ok':(s==='block'?'block':'start'); }
+function renderCards(cats){
+  grid.innerHTML = '';
+  if(!Array.isArray(cats) || !cats.length){
+    banner('Keine Kategorien empfangen. Prüfe WEBHOOK_URL und Script-Berechtigungen.');
+    return;
+  }
+  cats.forEach((c, i)=>{
+    const card = document.createElement('article');
+    const sc = statusClass(c.status);
+    card.className='card '+sc;
+    card.style.setProperty('--accent', c.accent || (sc==='ok'?'var(--ok)':sc==='block'?'var(--block)':'var(--start)'));
+    card.setAttribute('tabindex','0');
+    card.innerHTML = `
+      <div class="title">${c.title || c.folder || ('Modul '+(i+1))}</div>
+      <div class="meta"><span class="dot ${sc}"></span>${statusLabel(sc)}</div>
+      <div class="bar"><span style="width:${pct(c.progress)}%;background:${sc==='ok'?'var(--ok)':sc==='block'?'var(--block)':'var(--start)'}"></span></div>
+    `;
+    const open = ()=>openBubble(c);
+    card.addEventListener('click', open);
+    card.addEventListener('keypress', (e)=>{ if(e.key==='Enter' || e.key===' ') open(); });
+    grid.appendChild(card);
+  });
+}
+const overlay = $('overlay');
+$('bClose').onclick=()=>overlay.style.display='none';
+function openBubble(c){
+  overlay.style.display='flex';
+  $('bTitle').textContent = c.title || c.folder || 'Unbenannt';
+  $('bMeta').textContent = `Status: ${statusLabel(c.status)} • Fortschritt: ${pct(c.progress)}%`;
+  const bar=$('bProg'); bar.style.width=pct(c.progress)+'%'; bar.style.background=(c.status==='ok'?'var(--ok)':c.status==='block'?'var(--block)':'var(--start)');
+  $('bAccess').textContent = c.access || 'privat • aktiv';
+  const ul = $('bStops'); ul.innerHTML=''; (c.stops&&c.stops.length?c.stops:['keine']).forEach(s=>{ const li=document.createElement('li'); li.textContent=s; ul.appendChild(li); });
+  $('bOpen').href = `./${(c.folder||'module')}/index.html`;
+}
+let tId=null;
+function tRun(){ const t=$('timer'); tId=setInterval(()=>{ const s=Number((t.textContent.match(/[\d.]+/g)||['0'])[0]); t.textContent=' '+(s+0.1).toFixed(1)+'s'; },100); }
+function tStop(){ if(tId) clearInterval(tId); $('timer').textContent=''; }
+$('btnSeed').onclick = async()=>{ const b=$('btnSeed'); busy(b,true); try{ const r=await jget(WEBHOOK_URL+'?cmd=seed'); log(r,'Seed'); await doSync(); }catch(e){ banner('Seed fehlgeschlagen: '+e.message); log(String(e),'Seed ERR'); }finally{ busy(b,false); } };
+$('btnCsv').onclick = async()=>{ const b=$('btnCsv'); busy(b,true); try{ const r=await jget(WEBHOOK_URL+'?cmd=csv_import'); log(r,'CSV'); }catch(e){ banner('CSV-Import fehlgeschlagen: '+e.message); log(String(e),'CSV ERR'); }finally{ busy(b,false); } };
+$('btnFull').onclick = async()=>{ const b=$('btnFull'); busy(b,true); tRun(); try{ const r=await jget(WEBHOOK_URL+'?cmd=full_cycle'); log(r,'FULL'); await doSync(); }catch(e){ banner('Full-Cycle fehlgeschlagen: '+e.message); log(String(e),'FULL ERR'); }finally{ busy(b,false); tStop(); } };
+$('btnUpd').onclick = async()=>{ const b=$('btnUpd'); busy(b,true); tRun(); try{ const k=await jget(WEBHOOK_URL+'?cmd=kpi_update'); log(k,'KPI'); const i=await jget(WEBHOOK_URL+'?cmd=sheet_import'); log(i,'IMPORT'); await doSync(); }catch(e){ banner('Update fehlgeschlagen: '+e.message); log(String(e),'UPD ERR'); }finally{ busy(b,false); tStop(); } };
+$('btnSync').onclick = async()=>{ await doSync(); };
+$('btnAccess').onclick = ()=> window.open('./access_status.html','_blank','noopener');
+$('btnReport').onclick = ()=> window.open('./extractor_report.html','_blank','noopener');
+let autoTimer=null;
+$('auto').addEventListener('change', (e)=>{ if(e.target.checked){ autoTimer = setInterval(()=>{ doSync({silent:true}); }, 6000); }else{ clearInterval(autoTimer); autoTimer=null; } });
+let _syncLock=false;
+async function doSync(opt={}){
+  if(_syncLock) return;
+  _syncLock = true;
+  const b=$('btnSync'); if(!opt.silent) busy(b,true);
+  try{
+    const d=await jget(WEBHOOK_URL+'?cmd=meta');
+    const cats = Array.isArray(d?.categories)? d.categories : Array.isArray(d?.meta?.categories)? d.meta.categories : [];
+    renderCards(cats);
+    log({ok:true,count:cats.length},'Sync');
+  }catch(e){
+    banner('Sync fehlgeschlagen: '+e.message+' – Prüfe exec-URL & Deployment (Zugriff "Anyone with link").');
+    log(String(e),'Sync ERR');
+  }finally{
+    busy(b,false); _syncLock=false;
+  }
+}
+(async()=>{ await doSync(); })();
+</script>
+</body>
+</html>
