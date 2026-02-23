@@ -1,163 +1,53 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agent X – Live Dashboard</title>
-
-<style>
-:root{
-  --bg:#0b0f1a;
-  --panel:#111827;
-  --panel2:#0f172a;
-  --text:#e5e7eb;
-  --muted:#9ca3af;
-  --blue:#4cc9f0;
-  --green:#00ff88;
-  --red:#ff4d4d;
-  --line:rgba(255,255,255,.08);
-}
-
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  padding:20px;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,Segoe UI,Roboto,Arial;
-}
-
-h1{
-  color:var(--blue);
-  margin-bottom:5px;
-}
-
-.sub{
-  color:var(--muted);
-  font-size:13px;
-  margin-bottom:20px;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:20px;
-}
-
-.card{
-  background:linear-gradient(180deg,var(--panel),var(--panel2));
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:15px;
-}
-
-.card h2{
-  margin-top:0;
-  margin-bottom:15px;
-}
-
-.row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:10px;
-  padding:8px;
-  border-radius:8px;
-  background:rgba(255,255,255,.02);
-}
-
-.status{
-  font-weight:bold;
-}
-
-.ok{color:var(--green);}
-.start{color:var(--blue);}
-.block{color:var(--red);}
-
-</style>
-</head>
-<body>
-
-<h1>Agent X – Live Dashboard</h1>
-<div class="sub">Datenquelle: data.json</div>
-
-<div class="grid">
-
-  <div class="card">
-    <h2>Systems</h2>
-
-    <div class="row">
-      <div>Google Drive</div>
-      <div id="drive" class="status">...</div>
-    </div>
-
-    <div class="row">
-      <div>n8n</div>
-      <div id="n8n" class="status">...</div>
-    </div>
-
-    <div class="row">
-      <div>OAuth</div>
-      <div id="oauth" class="status">...</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>Finance</h2>
-
-    <div class="row">
-      <div>Monat Netto</div>
-      <div id="netto" class="status">...</div>
-    </div>
-
-    <div class="row">
-      <div>Fixkosten</div>
-      <div id="fixkosten" class="status">...</div>
-    </div>
-
-    <div class="row">
-      <div>Sparen</div>
-      <div id="sparen" class="status">...</div>
-    </div>
-  </div>
-
-</div>
-
 <script>
+const ENDPOINT = "https://script.google.com/macros/s/AKfycbwKWHhZPixif32U2b5AsfbS10OAYIxwvDD39GMWUHdqRqaktqxDr7KM0Dcbpu958V2wEQ/exec?sheet=dashboard";
+
 async function loadData(){
   try{
-    const response = await fetch('./data.json');
-    const data = await response.json();
+    // cache-busting
+    const response = await fetch(ENDPOINT + "&v=" + Date.now());
+    const payload = await response.json();
 
-    // SYSTEMS
-    setStatus("drive", data.systems.drive);
-    setStatus("n8n", data.systems.n8n);
-    setStatus("oauth", data.systems.oauth);
+    // key/value Liste -> Objekt bauen (systems.drive => OK, etc.)
+    const flat = {};
+    (payload.data || []).forEach(item => {
+      flat[String(item.key || "").trim()] = item.value;
+    });
 
-    // FINANCE
-    document.getElementById("netto").innerText = data.finance.netto + " €";
-    document.getElementById("fixkosten").innerText = data.finance.fixkosten + " €";
-    document.getElementById("sparen").innerText = data.finance.sparen + " €";
+    // Systems
+    setStatus("drive", flat["systems.drive"]);
+    setStatus("n8n", flat["systems.n8n"]);
+    setStatus("oauth", flat["systems.oauth"]);
+
+    // Finance
+    setMoney("netto", flat["finance.netto"]);
+    setMoney("fixkosten", flat["finance.fixkosten"]);
+    setMoney("sparen", flat["finance.sparen"]);
 
   }catch(err){
-    console.error("Fehler beim Laden:", err);
+    console.error("Data load error:", err);
   }
 }
 
 function setStatus(id, value){
   const el = document.getElementById(id);
-  el.innerText = value;
+  if(!el) return;
+
+  const v = String(value ?? "").toUpperCase();
+  el.innerText = v || "...";
 
   el.classList.remove("ok","start","block");
+  if(v === "OK") el.classList.add("ok");
+  else if(v === "START") el.classList.add("start");
+  else if(v === "BLOCK") el.classList.add("block");
+}
 
-  if(value === "OK") el.classList.add("ok");
-  if(value === "START") el.classList.add("start");
-  if(value === "BLOCK") el.classList.add("block");
+function setMoney(id, value){
+  const el = document.getElementById(id);
+  if(!el) return;
+
+  const num = Number(value);
+  el.innerText = Number.isFinite(num) ? num.toLocaleString("de-DE") + " €" : (value + " €");
 }
 
 loadData();
 </script>
-
-</body>
-</html>
