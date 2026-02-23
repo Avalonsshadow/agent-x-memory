@@ -1,226 +1,163 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Agent X – Dashboard (MVP)</title>
-  <style>
-    :root{
-      --bg:#0b0f1a;
-      --panel:#111827;
-      --panel2:#0f172a;
-      --text:#e5e7eb;
-      --muted:#9ca3af;
-      --blue:#4cc9f0;
-      --green:#00ff88;
-      --red:#ff4d4d;
-      --line:rgba(255,255,255,.08);
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      padding:18px;
-      background:var(--bg);
-      color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    }
-    header{
-      display:flex;
-      gap:12px;
-      align-items:flex-end;
-      justify-content:space-between;
-      border-bottom:1px solid var(--line);
-      padding-bottom:14px;
-      margin-bottom:14px;
-    }
-    h1{
-      margin:0;
-      font-size:28px;
-      letter-spacing:.3px;
-      color:var(--blue);
-    }
-    .sub{
-      margin:6px 0 0;
-      color:var(--muted);
-      font-size:13px;
-    }
-    .badge{
-      padding:8px 10px;
-      border:1px solid var(--line);
-      border-radius:10px;
-      background:rgba(255,255,255,.03);
-      color:var(--muted);
-      font-size:12px;
-      white-space:nowrap;
-    }
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-      gap:14px;
-    }
-    .card{
-      background:linear-gradient(180deg,var(--panel),var(--panel2));
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:14px;
-      box-shadow:0 0 18px rgba(0,0,0,.35);
-    }
-    .card h2{
-      margin:0 0 10px;
-      font-size:16px;
-      letter-spacing:.2px;
-    }
-    .row{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      padding:9px 10px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:rgba(255,255,255,.02);
-      margin-bottom:10px;
-    }
-    .name{font-weight:600}
-    .meta{color:var(--muted); font-size:12px; margin-top:2px}
-    .status{
-      font-weight:700;
-      padding:6px 10px;
-      border-radius:999px;
-      align-self:flex-start;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      min-width:90px;
-      text-align:center;
-    }
-    .ok{color:var(--green)}
-    .progress{color:var(--blue)}
-    .block{color:var(--red)}
-    .small{color:var(--muted); font-size:12px; margin-top:8px}
-    .divider{height:1px; background:var(--line); margin:12px 0}
-    .list{
-      margin:0;
-      padding-left:18px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.35;
-    }
-    footer{
-      margin-top:14px;
-      color:var(--muted);
-      font-size:12px;
-      opacity:.9;
-    }
-    a{color:var(--blue); text-decoration:none}
-    a:hover{text-decoration:underline}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent X – Live Dashboard</title>
+
+<style>
+:root{
+  --bg:#0b0f1a;
+  --panel:#111827;
+  --panel2:#0f172a;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --blue:#4cc9f0;
+  --green:#00ff88;
+  --red:#ff4d4d;
+  --line:rgba(255,255,255,.08);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  padding:20px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,Segoe UI,Roboto,Arial;
+}
+
+h1{
+  color:var(--blue);
+  margin-bottom:5px;
+}
+
+.sub{
+  color:var(--muted);
+  font-size:13px;
+  margin-bottom:20px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
+}
+
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:15px;
+}
+
+.card h2{
+  margin-top:0;
+  margin-bottom:15px;
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+  padding:8px;
+  border-radius:8px;
+  background:rgba(255,255,255,.02);
+}
+
+.status{
+  font-weight:bold;
+}
+
+.ok{color:var(--green);}
+.start{color:var(--blue);}
+.block{color:var(--red);}
+
+</style>
 </head>
 <body>
-  <header>
-    <div>
-      <h1>Agent X – Live Dashboard</h1>
-      <p class="sub">MVP v0.1 • Ziel: Online sichtbar → dann Live-Daten aus Google Sheets</p>
+
+<h1>Agent X – Live Dashboard</h1>
+<div class="sub">Datenquelle: data.json</div>
+
+<div class="grid">
+
+  <div class="card">
+    <h2>Systems</h2>
+
+    <div class="row">
+      <div>Google Drive</div>
+      <div id="drive" class="status">...</div>
     </div>
-    <div class="badge" id="buildInfo">Build: OK • Quelle: /docs</div>
-  </header>
 
-  <div class="grid">
-    <!-- Systems -->
-    <section class="card">
-      <h2>Systems</h2>
+    <div class="row">
+      <div>n8n</div>
+      <div id="n8n" class="status">...</div>
+    </div>
 
-      <div class="row">
-        <div>
-          <div class="name">Google Drive</div>
-          <div class="meta">Ablage / Backups / Versionierung</div>
-        </div>
-        <div class="status ok">🟢 OK</div>
-      </div>
-
-      <div class="row">
-        <div>
-          <div class="name">n8n</div>
-          <div class="meta">Scheduler + API Orchestration</div>
-        </div>
-        <div class="status progress">🔵 Start</div>
-      </div>
-
-      <div class="row" style="margin-bottom:0">
-        <div>
-          <div class="name">OAuth / Zugriff</div>
-          <div class="meta">Sheets/Drive Auth & Token Health</div>
-        </div>
-        <div class="status block">🔴 Block</div>
-      </div>
-
-      <div class="small">Top Blocker: Token prüfen / Export-Layer für private Daten</div>
-    </section>
-
-    <!-- Finance -->
-    <section class="card">
-      <h2>Finance</h2>
-
-      <div class="row">
-        <div>
-          <div class="name">Monat Netto</div>
-          <div class="meta">Zielwert (placeholder)</div>
-        </div>
-        <div class="status ok">5.000 €</div>
-      </div>
-
-      <div class="row">
-        <div>
-          <div class="name">Fixkosten</div>
-          <div class="meta">DE+ES (placeholder)</div>
-        </div>
-        <div class="status progress">3.000 €</div>
-      </div>
-
-      <div class="row" style="margin-bottom:0">
-        <div>
-          <div class="name">Sparen / Tilgung</div>
-          <div class="meta">Monatlich (placeholder)</div>
-        </div>
-        <div class="status ok">2.000 €</div>
-      </div>
-
-      <div class="divider"></div>
-      <div class="small">
-        Nächstes: Live aus Sheet → Szenarien (100k / 7–9 Jahre) + Tilgungsplan “Highrunner zuerst”
-      </div>
-    </section>
-
-    <!-- Project -->
-    <section class="card">
-      <h2>Projektstatus</h2>
-
-      <div class="row">
-        <div>
-          <div class="name">Sprint 1</div>
-          <div class="meta">Online Proof + Dashboard Skeleton</div>
-        </div>
-        <div class="status ok">🟢 Done</div>
-      </div>
-
-      <div class="row">
-        <div>
-          <div class="name">Sprint 2</div>
-          <div class="meta">Live-Daten aus JSON → später Sheets</div>
-        </div>
-        <div class="status progress">🔵 Next</div>
-      </div>
-
-      <div class="divider"></div>
-      <div class="small">Top 3 nächste Schritte:</div>
-      <ol class="list">
-        <li><b>data.json</b> in <code>/docs</code> anlegen</li>
-        <li>Dashboard per <code>fetch()</code> live füttern</li>
-        <li>Export-Layer aus Google Sheets (n8n oder Apps Script)</li>
-      </ol>
-    </section>
+    <div class="row">
+      <div>OAuth</div>
+      <div id="oauth" class="status">...</div>
+    </div>
   </div>
 
-  <footer>
-    Hinweis: Das ist MVP v0.1. Sobald die Seite stabil ist, kommt Live-Data-Layer + Automationen.
-  </footer>
+  <div class="card">
+    <h2>Finance</h2>
+
+    <div class="row">
+      <div>Monat Netto</div>
+      <div id="netto" class="status">...</div>
+    </div>
+
+    <div class="row">
+      <div>Fixkosten</div>
+      <div id="fixkosten" class="status">...</div>
+    </div>
+
+    <div class="row">
+      <div>Sparen</div>
+      <div id="sparen" class="status">...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+async function loadData(){
+  try{
+    const response = await fetch('./data.json');
+    const data = await response.json();
+
+    // SYSTEMS
+    setStatus("drive", data.systems.drive);
+    setStatus("n8n", data.systems.n8n);
+    setStatus("oauth", data.systems.oauth);
+
+    // FINANCE
+    document.getElementById("netto").innerText = data.finance.netto + " €";
+    document.getElementById("fixkosten").innerText = data.finance.fixkosten + " €";
+    document.getElementById("sparen").innerText = data.finance.sparen + " €";
+
+  }catch(err){
+    console.error("Fehler beim Laden:", err);
+  }
+}
+
+function setStatus(id, value){
+  const el = document.getElementById(id);
+  el.innerText = value;
+
+  el.classList.remove("ok","start","block");
+
+  if(value === "OK") el.classList.add("ok");
+  if(value === "START") el.classList.add("start");
+  if(value === "BLOCK") el.classList.add("block");
+}
+
+loadData();
+</script>
+
 </body>
 </html>
