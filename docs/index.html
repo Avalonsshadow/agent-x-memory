@@ -1,71 +1,139 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Agent X – Live Dashboard V2</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg,#0a0f1c,#0d1a33);
-  color: white;
+:root{
+  --bg1:#0a0f1c;
+  --bg2:#0d1a33;
+  --card:#111c2e;
+  --card2:#1a2a44;
+  --text:#ffffff;
+  --muted:rgba(255,255,255,0.7);
+  --ok:#1f7a3f;
+  --start:#1f4d7a;
+  --block:#7a1f1f;
+  --bar:#2ecc71;
+  --line:rgba(255,255,255,0.08);
 }
 
-h1 { padding:20px; margin:0; }
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+  color:var(--text);
+}
 
-.container {
+header{
+  padding:18px 20px;
+  border-bottom:1px solid var(--line);
   display:flex;
-  gap:20px;
-  padding:20px;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+}
+
+h1{
+  margin:0;
+  font-size:26px;
+}
+
+.small{
+  margin:6px 0 0;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.wrap{
+  display:flex;
+  gap:16px;
+  padding:18px;
   flex-wrap:wrap;
 }
 
-.card {
-  background:#111c2e;
+.card{
+  background:var(--card);
   border-radius:12px;
-  padding:20px;
+  padding:16px;
   min-width:300px;
   flex:1;
+  box-shadow:0 0 18px rgba(0,0,0,0.35);
 }
 
-.status {
-  margin:6px 0;
-  padding:6px 10px;
-  border-radius:15px;
+.card h2{
+  margin:0 0 12px;
+  font-size:16px;
+}
+
+.chip{
   display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:bold;
+  margin:6px 8px 0 0;
+  background:#333;
+}
+
+.ok{ background:var(--ok); }
+.start{ background:var(--start); }
+.block{ background:var(--block); }
+
+.row{
+  padding:10px;
+  border-radius:10px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--line);
+  margin-bottom:10px;
+}
+
+.row-title{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
   font-weight:bold;
 }
 
-.ok { background:#1f7a3f; }
-.start { background:#1f4d7a; }
-.block { background:#7a1f1f; }
-
-.project {
-  margin-bottom:12px;
-  padding:10px;
-  background:#1a2a44;
-  border-radius:8px;
+.row-sub{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.35;
 }
 
-.progress-bar {
+.progressbar{
   height:10px;
-  background:#333;
-  border-radius:5px;
+  background:rgba(255,255,255,0.12);
+  border-radius:6px;
   overflow:hidden;
-  margin-top:5px;
+  margin-top:8px;
 }
 
-.progress-fill {
+.progressfill{
   height:100%;
-  background:#2ecc71;
+  width:0%;
+  background:var(--bar);
 }
 
-.debug {
+.kvline{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,0.02);
+  margin-bottom:8px;
+}
+
+.debug{
   position:fixed;
   top:10px;
   right:10px;
+  z-index:9999;
   background:#111;
   padding:6px 10px;
   font-size:12px;
@@ -74,152 +142,219 @@ h1 { padding:20px; margin:0; }
 }
 </style>
 </head>
+
 <body>
+<header>
+  <div>
+    <h1>Agent X – Live Dashboard (V2)</h1>
+    <div class="small">Quelle: Google Sheets → Apps Script JSON → GitHub Pages</div>
+  </div>
+  <div class="small" id="updatedAt">updated: ...</div>
+</header>
 
-<h1>Agent X – Live Dashboard</h1>
+<div class="wrap">
 
-<div class="container">
+  <div class="card">
+    <h2>Systems</h2>
+    <div id="systemsList">loading…</div>
+  </div>
 
-<div class="card">
-<h2>Systems</h2>
-<div id="systemsContainer"></div>
+  <div class="card">
+    <h2>Projects</h2>
+    <div id="projectsList">loading…</div>
+  </div>
+
+  <div class="card">
+    <h2>Finance (KV)</h2>
+    <div class="small">Optional: kommt aus Tab <b>kv</b> (key/value). Wenn kv fehlt, bleibt dieser Block leer.</div>
+    <div style="height:10px"></div>
+    <div id="financeList">loading…</div>
+  </div>
+
 </div>
 
-<div class="card">
-<h2>Finance</h2>
-<div id="financeContainer"></div>
-</div>
-
-<div class="card">
-<h2>Projects</h2>
-<div id="projectsContainer"></div>
-</div>
-
-</div>
-
-<div id="dataStatus" class="debug">loading...</div>
+<div id="dataStatus" class="debug">loading…</div>
 
 <script>
+// ✅ HIER EINTRAGEN: deine WebApp URL (exec) + mode=v2
+const API_URL = "PASTE_YOUR_V2_EXEC_URL_HERE?mode=v2";
 
-const ENDPOINT = "https://script.google.com/macros/s/AKfycbwKWHhZPixif32U2b5AsfbS10OAYIxwvDD39GMWUHdqRqaktqxDr7KM0Dcbpu958V2wEQ/exec?sheet=dashboard";
-
-function namespaceToObject(flat){
-  const result = {};
-
-  Object.keys(flat).forEach(key=>{
-    const parts = key.split(".");
-    let current = result;
-
-    parts.forEach((part,index)=>{
-      if(index === parts.length - 1){
-        current[part] = flat[key];
-      } else {
-        current[part] = current[part] || {};
-        current = current[part];
-      }
-    });
-  });
-
-  return result;
+function setStatus(text, ok=true){
+  const el = document.getElementById("dataStatus");
+  el.textContent = text;
+  el.style.color = ok ? "#0f0" : "#f33";
 }
 
-function renderSystems(data){
-  const container = document.getElementById("systemsContainer");
-  container.innerHTML = "";
-
-  if(!data.systems) return;
-
-  Object.keys(data.systems).forEach(name=>{
-    const value = String(data.systems[name]).toUpperCase();
-    const div = document.createElement("div");
-    div.className = "status " +
-      (value==="OK"?"ok":
-       value==="START"?"start":
-       value==="BLOCK"?"block":"");
-    div.textContent = name + " : " + value;
-    container.appendChild(div);
-  });
+function statusClass(s){
+  const v = String(s || "").toUpperCase();
+  if(v === "OK") return "ok";
+  if(v === "START") return "start";
+  if(v === "BLOCK") return "block";
+  return "";
 }
 
-function renderFinance(data){
-  const container = document.getElementById("financeContainer");
-  container.innerHTML = "";
-
-  if(!data.finance) return;
-
-  Object.keys(data.finance).forEach(key=>{
-    const div = document.createElement("div");
-    div.textContent =
-      key + " : " +
-      Number(data.finance[key]).toLocaleString("de-DE") + " €";
-    container.appendChild(div);
-  });
+function moneyDE(v){
+  const n = Number(v);
+  if(Number.isFinite(n)) return n.toLocaleString("de-DE") + " €";
+  return String(v ?? "");
 }
 
-function renderProjects(data){
-  const container = document.getElementById("projectsContainer");
-  container.innerHTML = "";
+function safeText(v){
+  return String(v ?? "");
+}
 
-  if(!data.project) return;
+function renderSystems(systems){
+  const el = document.getElementById("systemsList");
+  el.innerHTML = "";
+  if(!Array.isArray(systems) || systems.length === 0){
+    el.textContent = "No systems data";
+    return;
+  }
 
-  Object.keys(data.project).forEach(id=>{
-    const project = data.project[id];
-    const wrapper = document.createElement("div");
-    wrapper.className = "project";
+  systems.forEach(item=>{
+    const system = safeText(item.system);
+    const status = safeText(item.status);
+    const prog = item.progress;
+    const note = safeText(item.note);
 
-    const title = document.createElement("div");
-    title.textContent = "Project " + id;
-    wrapper.appendChild(title);
+    const row = document.createElement("div");
+    row.className = "row";
 
-    if(project.progress){
+    const top = document.createElement("div");
+    top.className = "row-title";
+    top.innerHTML = `<span>${system}</span><span class="chip ${statusClass(status)}">${status}</span>`;
+
+    const sub = document.createElement("div");
+    sub.className = "row-sub";
+    sub.textContent = note;
+
+    row.appendChild(top);
+    row.appendChild(sub);
+
+    if(prog !== null && prog !== undefined && prog !== ""){
+      const p = Math.max(0, Math.min(100, Number(prog)));
       const bar = document.createElement("div");
-      bar.className="progress-bar";
-
+      bar.className = "progressbar";
       const fill = document.createElement("div");
-      fill.className="progress-fill";
-      fill.style.width = project.progress + "%";
-
+      fill.className = "progressfill";
+      fill.style.width = (Number.isFinite(p) ? p : 0) + "%";
       bar.appendChild(fill);
-      wrapper.appendChild(bar);
+      row.appendChild(bar);
     }
 
-    Object.keys(project).forEach(field=>{
-      if(field !== "progress"){
-        const p = document.createElement("div");
-        p.textContent = field + " : " + project[field];
-        wrapper.appendChild(p);
-      }
-    });
-
-    container.appendChild(wrapper);
+    el.appendChild(row);
   });
 }
 
-async function loadData(){
+function renderProjects(projects){
+  const el = document.getElementById("projectsList");
+  el.innerHTML = "";
+  if(!Array.isArray(projects) || projects.length === 0){
+    el.textContent = "No projects data";
+    return;
+  }
+
+  projects.forEach(p=>{
+    const row = document.createElement("div");
+    row.className = "row";
+
+    const id = safeText(p.id);
+    const name = safeText(p.name);
+    const owner = safeText(p.owner);
+    const status = safeText(p.status);
+    const blocker = safeText(p.blocker);
+    const deadline = safeText(p.deadline);
+    const prog = p.progress;
+
+    const top = document.createElement("div");
+    top.className = "row-title";
+    top.innerHTML = `<span>${id} • ${name}</span><span class="chip">${status || "—"}</span>`;
+
+    const sub = document.createElement("div");
+    sub.className = "row-sub";
+    sub.innerHTML =
+      `<div><b>Owner:</b> ${owner || "—"}</div>` +
+      `<div><b>Deadline:</b> ${deadline ? deadline.slice(0,10) : "—"}</div>` +
+      `<div><b>Blocker:</b> ${blocker || "—"}</div>`;
+
+    row.appendChild(top);
+    row.appendChild(sub);
+
+    if(prog !== null && prog !== undefined && prog !== ""){
+      const pr = Math.max(0, Math.min(100, Number(prog)));
+      const bar = document.createElement("div");
+      bar.className = "progressbar";
+      const fill = document.createElement("div");
+      fill.className = "progressfill";
+      fill.style.width = (Number.isFinite(pr) ? pr : 0) + "%";
+      bar.appendChild(fill);
+      row.appendChild(bar);
+
+      const ptxt = document.createElement("div");
+      ptxt.className = "row-sub";
+      ptxt.textContent = "Progress: " + (Number.isFinite(pr) ? pr : 0) + "%";
+      row.appendChild(ptxt);
+    }
+
+    el.appendChild(row);
+  });
+}
+
+function renderFinanceKV(kv){
+  const el = document.getElementById("financeList");
+  el.innerHTML = "";
+
+  if(!kv || typeof kv !== "object" || Object.keys(kv).length === 0){
+    el.textContent = "kv missing or empty (create tab 'kv')";
+    return;
+  }
+
+  // Wir zeigen nur finance.* Keys
+  const keys = Object.keys(kv).filter(k => String(k).startsWith("finance."));
+  if(keys.length === 0){
+    el.textContent = "No finance.* keys in kv";
+    return;
+  }
+
+  keys.sort().forEach(k=>{
+    const line = document.createElement("div");
+    line.className = "kvline";
+    const label = k.replace("finance.","");
+    const val = kv[k];
+    line.innerHTML = `<span>${label}</span><span><b>${moneyDE(val)}</b></span>`;
+    el.appendChild(line);
+  });
+}
+
+async function load(){
   try{
-    document.getElementById("dataStatus").textContent="fetching...";
-    const res = await fetch(ENDPOINT+"&v="+Date.now());
-    const payload = await res.json();
+    setStatus("fetch…");
+    const url = API_URL + "&_=" + Date.now();
+    const res = await fetch(url, { cache: "no-store" });
+    const json = await res.json();
 
-    const flat = {};
-    payload.data.forEach(item=>{
-      flat[item.key] = item.value;
-    });
+    document.getElementById("updatedAt").textContent = "updated: " + (json.updated || "—");
 
-    const structured = namespaceToObject(flat);
+    renderSystems(json.systems);
+    renderProjects(json.projects);
+    renderFinanceKV(json.kv);
 
-    renderSystems(structured);
-    renderFinance(structured);
-    renderProjects(structured);
-
-    document.getElementById("dataStatus").textContent =
-      "OK • "+new Date().toLocaleTimeString();
+    setStatus("OK • " + new Date().toLocaleTimeString(), true);
 
   }catch(e){
-    document.getElementById("dataStatus").textContent =
-      "ERROR "+e.message;
+    console.error(e);
+    setStatus("ERROR: " + e.message, false);
   }
 }
+
+load();
+
+// Optional: Auto-Refresh (alle 30 Sekunden)
+// setInterval(load, 30000);
+</script>
+
+</body>
+</html>
 
 loadData();
 
