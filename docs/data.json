@@ -1,0 +1,16 @@
+{
+  "systems": {
+    "drive": "OK",
+    "n8n": "START",
+    "oauth": "BLOCK"
+  },
+  "finance": {
+    "netto": 9999,
+    "fixkosten": 3000,
+    "sparen": 2000
+  },
+  "project": {
+    "sprint1": "DONE",
+    "sprint2": "NEXT"
+  }
+}
