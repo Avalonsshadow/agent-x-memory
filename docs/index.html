@@ -1,41 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent X – Live Dashboard</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#0a0f1c,#0d1a33);
+  color: white;
+}
+
+h1 {
+  padding: 20px;
+  margin: 0;
+  font-size: 28px;
+}
+
+.container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: #111c2e;
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 280px;
+  flex: 1;
+  box-shadow: 0 0 20px rgba(0,0,0,0.4);
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+.status {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-radius: 20px;
+  display: inline-block;
+  font-weight: bold;
+}
+
+.ok { background: #1f7a3f; }
+.start { background: #1f4d7a; }
+.block { background: #7a1f1f; }
+
+.debug {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: #111;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  font-family: monospace;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Agent X – Live Dashboard</h1>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Systems</h2>
+    <div id="drive" class="status">...</div><br>
+    <div id="n8n" class="status">...</div><br>
+    <div id="oauth" class="status">...</div>
+  </div>
+
+  <div class="card">
+    <h2>Finance</h2>
+    <div>Netto: <span id="netto">...</span></div>
+    <div>Fixkosten: <span id="fixkosten">...</span></div>
+    <div>Sparen: <span id="sparen">...</span></div>
+  </div>
+
+</div>
+
+<div id="dataStatus" class="debug">loading...</div>
+
 <script>
 const ENDPOINT = "https://script.google.com/macros/s/AKfycbwKWHhZPixif32U2b5AsfbS10OAYIxwvDD39GMWUHdqRqaktqxDr7KM0Dcbpu958V2wEQ/exec?sheet=dashboard";
-
-async function loadData(){
-  try{
-    // cache-busting
-    const response = await fetch(ENDPOINT + "&v=" + Date.now());
-    const payload = await response.json();
-
-    // key/value Liste -> Objekt bauen (systems.drive => OK, etc.)
-    const flat = {};
-    (payload.data || []).forEach(item => {
-      flat[String(item.key || "").trim()] = item.value;
-    });
-
-    // Systems
-    setStatus("drive", flat["systems.drive"]);
-    setStatus("n8n", flat["systems.n8n"]);
-    setStatus("oauth", flat["systems.oauth"]);
-
-    // Finance
-    setMoney("netto", flat["finance.netto"]);
-    setMoney("fixkosten", flat["finance.fixkosten"]);
-    setMoney("sparen", flat["finance.sparen"]);
-
-  }catch(err){
-    console.error("Data load error:", err);
-  }
-}
 
 function setStatus(id, value){
   const el = document.getElementById(id);
   if(!el) return;
 
   const v = String(value ?? "").toUpperCase();
-  el.innerText = v || "...";
-
+  el.textContent = v;
   el.classList.remove("ok","start","block");
+
   if(v === "OK") el.classList.add("ok");
   else if(v === "START") el.classList.add("start");
   else if(v === "BLOCK") el.classList.add("block");
@@ -46,8 +109,43 @@ function setMoney(id, value){
   if(!el) return;
 
   const num = Number(value);
-  el.innerText = Number.isFinite(num) ? num.toLocaleString("de-DE") + " €" : (value + " €");
+  el.textContent = Number.isFinite(num)
+    ? num.toLocaleString("de-DE") + " €"
+    : value;
+}
+
+async function loadData(){
+  try{
+    document.getElementById("dataStatus").textContent = "fetching...";
+
+    const response = await fetch(ENDPOINT + "&v=" + Date.now());
+    const payload = await response.json();
+
+    const flat = {};
+    (payload.data || []).forEach(item => {
+      flat[String(item.key).trim()] = item.value;
+    });
+
+    setStatus("drive", flat["systems.drive"]);
+    setStatus("n8n", flat["systems.n8n"]);
+    setStatus("oauth", flat["systems.oauth"]);
+
+    setMoney("netto", flat["finance.netto"]);
+    setMoney("fixkosten", flat["finance.fixkosten"]);
+    setMoney("sparen", flat["finance.sparen"]);
+
+    document.getElementById("dataStatus").textContent =
+      "OK • " + new Date().toLocaleTimeString();
+
+  }catch(err){
+    console.error(err);
+    document.getElementById("dataStatus").textContent =
+      "ERROR: " + err.message;
+  }
 }
 
 loadData();
 </script>
+
+</body>
+</html>
