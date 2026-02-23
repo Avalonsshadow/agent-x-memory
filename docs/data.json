@@ -5,7 +5,7 @@
     "oauth": "BLOCK"
   },
   "finance": {
-    "netto": 9999,
+    "netto": 99999,
     "fixkosten": 3000,
     "sparen": 2000
   },
