@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agent X – Live Dashboard</title>
+<title>Agent X – Live Dashboard V2</title>
 
 <style>
 body {
@@ -13,85 +13,87 @@ body {
   color: white;
 }
 
-h1 {
-  padding: 20px;
-  margin: 0;
-  font-size: 28px;
-}
+h1 { padding:20px; margin:0; }
 
 .container {
-  display: flex;
-  gap: 20px;
-  padding: 20px;
-  flex-wrap: wrap;
+  display:flex;
+  gap:20px;
+  padding:20px;
+  flex-wrap:wrap;
 }
 
 .card {
-  background: #111c2e;
-  border-radius: 12px;
-  padding: 20px;
-  min-width: 280px;
-  flex: 1;
-  box-shadow: 0 0 20px rgba(0,0,0,0.4);
-}
-
-.card h2 {
-  margin-top: 0;
+  background:#111c2e;
+  border-radius:12px;
+  padding:20px;
+  min-width:300px;
+  flex:1;
 }
 
 .status {
-  margin: 10px 0;
-  padding: 8px 12px;
-  border-radius: 20px;
-  display: inline-block;
-  font-weight: bold;
+  margin:6px 0;
+  padding:6px 10px;
+  border-radius:15px;
+  display:inline-block;
+  font-weight:bold;
 }
 
-.ok { background: #1f7a3f; }
-.start { background: #1f4d7a; }
-.block { background: #7a1f1f; }
+.ok { background:#1f7a3f; }
+.start { background:#1f4d7a; }
+.block { background:#7a1f1f; }
 
-.project-item {
-  margin: 8px 0;
+.project {
+  margin-bottom:12px;
+  padding:10px;
+  background:#1a2a44;
+  border-radius:8px;
+}
+
+.progress-bar {
+  height:10px;
+  background:#333;
+  border-radius:5px;
+  overflow:hidden;
+  margin-top:5px;
+}
+
+.progress-fill {
+  height:100%;
+  background:#2ecc71;
 }
 
 .debug {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  background: #111;
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 6px;
-  font-family: monospace;
+  position:fixed;
+  top:10px;
+  right:10px;
+  background:#111;
+  padding:6px 10px;
+  font-size:12px;
+  border-radius:6px;
+  font-family:monospace;
 }
 </style>
 </head>
-
 <body>
 
 <h1>Agent X – Live Dashboard</h1>
 
 <div class="container">
 
-  <div class="card">
-    <h2>Systems</h2>
-    <div id="drive" class="status">...</div><br>
-    <div id="n8n" class="status">...</div><br>
-    <div id="oauth" class="status">...</div>
-  </div>
+<div class="card">
+<h2>Systems</h2>
+<div id="systemsContainer"></div>
+</div>
 
-  <div class="card">
-    <h2>Finance</h2>
-    <div>Netto: <span id="netto">...</span></div>
-    <div>Fixkosten: <span id="fixkosten">...</span></div>
-    <div>Sparen: <span id="sparen">...</span></div>
-  </div>
+<div class="card">
+<h2>Finance</h2>
+<div id="financeContainer"></div>
+</div>
 
-  <div class="card">
-    <h2>Projekte</h2>
-    <div id="projectsContainer"></div>
-  </div>
+<div class="card">
+<h2>Projects</h2>
+<div id="projectsContainer"></div>
+</div>
 
 </div>
 
@@ -101,81 +103,126 @@ h1 {
 
 const ENDPOINT = "https://script.google.com/macros/s/AKfycbwKWHhZPixif32U2b5AsfbS10OAYIxwvDD39GMWUHdqRqaktqxDr7KM0Dcbpu958V2wEQ/exec?sheet=dashboard";
 
-function setStatus(id, value){
-  const el = document.getElementById(id);
-  if(!el) return;
+function namespaceToObject(flat){
+  const result = {};
 
-  const v = String(value ?? "").toUpperCase();
-  el.textContent = v;
-  el.classList.remove("ok","start","block");
+  Object.keys(flat).forEach(key=>{
+    const parts = key.split(".");
+    let current = result;
 
-  if(v === "OK") el.classList.add("ok");
-  else if(v === "START") el.classList.add("start");
-  else if(v === "BLOCK") el.classList.add("block");
+    parts.forEach((part,index)=>{
+      if(index === parts.length - 1){
+        current[part] = flat[key];
+      } else {
+        current[part] = current[part] || {};
+        current = current[part];
+      }
+    });
+  });
+
+  return result;
 }
 
-function setMoney(id, value){
-  const el = document.getElementById(id);
-  if(!el) return;
+function renderSystems(data){
+  const container = document.getElementById("systemsContainer");
+  container.innerHTML = "";
 
-  const num = Number(value);
-  el.textContent = Number.isFinite(num)
-    ? num.toLocaleString("de-DE") + " €"
-    : value;
+  if(!data.systems) return;
+
+  Object.keys(data.systems).forEach(name=>{
+    const value = String(data.systems[name]).toUpperCase();
+    const div = document.createElement("div");
+    div.className = "status " +
+      (value==="OK"?"ok":
+       value==="START"?"start":
+       value==="BLOCK"?"block":"");
+    div.textContent = name + " : " + value;
+    container.appendChild(div);
+  });
 }
 
-function renderProjects(flat){
+function renderFinance(data){
+  const container = document.getElementById("financeContainer");
+  container.innerHTML = "";
+
+  if(!data.finance) return;
+
+  Object.keys(data.finance).forEach(key=>{
+    const div = document.createElement("div");
+    div.textContent =
+      key + " : " +
+      Number(data.finance[key]).toLocaleString("de-DE") + " €";
+    container.appendChild(div);
+  });
+}
+
+function renderProjects(data){
   const container = document.getElementById("projectsContainer");
   container.innerHTML = "";
 
-  Object.keys(flat)
-    .filter(key => key.startsWith("Projekt_"))
-    .forEach(key => {
-      const div = document.createElement("div");
-      div.className = "project-item";
-      div.textContent = key + ": " + flat[key];
-      container.appendChild(div);
+  if(!data.project) return;
+
+  Object.keys(data.project).forEach(id=>{
+    const project = data.project[id];
+    const wrapper = document.createElement("div");
+    wrapper.className = "project";
+
+    const title = document.createElement("div");
+    title.textContent = "Project " + id;
+    wrapper.appendChild(title);
+
+    if(project.progress){
+      const bar = document.createElement("div");
+      bar.className="progress-bar";
+
+      const fill = document.createElement("div");
+      fill.className="progress-fill";
+      fill.style.width = project.progress + "%";
+
+      bar.appendChild(fill);
+      wrapper.appendChild(bar);
+    }
+
+    Object.keys(project).forEach(field=>{
+      if(field !== "progress"){
+        const p = document.createElement("div");
+        p.textContent = field + " : " + project[field];
+        wrapper.appendChild(p);
+      }
     });
+
+    container.appendChild(wrapper);
+  });
 }
 
 async function loadData(){
   try{
-    document.getElementById("dataStatus").textContent = "fetching...";
-
-    const response = await fetch(ENDPOINT + "&v=" + Date.now());
-    const payload = await response.json();
+    document.getElementById("dataStatus").textContent="fetching...";
+    const res = await fetch(ENDPOINT+"&v="+Date.now());
+    const payload = await res.json();
 
     const flat = {};
-    (payload.data || []).forEach(item => {
-      flat[String(item.key).trim()] = item.value;
+    payload.data.forEach(item=>{
+      flat[item.key] = item.value;
     });
 
-    // Systems
-    setStatus("drive", flat["systems.drive"]);
-    setStatus("n8n", flat["systems.n8n"]);
-    setStatus("oauth", flat["systems.oauth"]);
+    const structured = namespaceToObject(flat);
 
-    // Finance
-    setMoney("netto", flat["finance.netto"]);
-    setMoney("fixkosten", flat["finance.fixkosten"]);
-    setMoney("sparen", flat["finance.sparen"]);
-
-    // Projekte (automatisch)
-    renderProjects(flat);
+    renderSystems(structured);
+    renderFinance(structured);
+    renderProjects(structured);
 
     document.getElementById("dataStatus").textContent =
-      "OK • " + new Date().toLocaleTimeString();
+      "OK • "+new Date().toLocaleTimeString();
 
-  }catch(err){
-    console.error(err);
+  }catch(e){
     document.getElementById("dataStatus").textContent =
-      "ERROR: " + err.message;
+      "ERROR "+e.message;
   }
 }
 
 loadData();
 
 </script>
-
 </body>
 </html>
