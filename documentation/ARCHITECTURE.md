@@ -46,3 +46,7 @@ Importierte Anweisungen bleiben Text. Es gibt keinen Tool-Ausführungsweg aus Do
 
 ## Persönliche Inhalte
 Kein vorbefülltes persönliches Profil und keine Gesundheits-/Finanzdaten im öffentlichen Code. Private Startdaten ausschließlich separat exportieren und nach Anmeldung importieren. Historische Angaben nicht automatisch übernehmen; Ausbildung nicht als Zertifizierung darstellen.
+
+## Entscheidung: lokale Update-/Importautomatisierung (04.10.2026)
+Fester Starter prüft den bereits autorisierten GitHub-Entwicklungszweig beim Start. Download wird an einen Commit gebunden; Anwendungscode per Staging/Umbenennung ersetzt, vorher lokales Codebackup. Vertrauensgrenze: Schreibzugriff auf den freigegebenen Entwicklungszweig bedeutet auslieferbaren Code. Keine beliebigen Update-URLs, keine Geheimnisse in GitHub. Laufender Server auf Standardport blockiert einen zweiten Starter. Syntax-/Archivvalidierung ist kein vollständiger Sicherheitsnachweis. Root-Starter bleibt stabil und wird nicht aus dem Archiv ersetzt.
+ImportWorker verarbeitet ausschließlich lokale JSON-Datenpakete aus einem privaten Inbox-Ordner, mit stabiler Dateigröße/Zeitstempel über zwei Scans, atomarem additiven DB-Import, SQLite-Backup, Quellenstatus und Fehlerquarantäne. Keine Befehlsausführung aus Importen. Zugriffsschutz gilt für Statusendpunkte; kein privater API-Cache. Aktivierung explizit per --automate oder Starter. Alle anderen Scheduler weiter inaktiv.

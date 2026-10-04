@@ -15,6 +15,7 @@ import time
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
+from automation import ImportWorker
 
 WEB = Path(__file__).parent / 'web'
 KINDS = {'project', 'task', 'note', 'fact', 'document', 'event'}
@@ -237,7 +238,12 @@ class Handler(BaseHTTPRequestHandler):
             if not self.auth(): return
             if path=='/api/records': self.send(200,self.server.store.records())
             elif path=='/api/export': self.send(200,{'schema_version':1,'exported_at':now(),'records':self.server.store.records()})
-            elif path=='/api/system': self.send(200,{'storage':'SQLite · gespeichert auf diesem Server','activity':self.server.store.activity(),'integrations':[{'name':n,'status':'not_configured','last_success':None,'error':None} for n in ['Google Drive','Gmail','Google Kalender','GitHub']],'jobs':{'status':'inactive','last_success':None},'online':self.server.secure})
+            elif path=='/api/system':
+                try:
+                    updater=json.loads((self.server.store.path.parent/'update-status.json').read_text())
+                except (OSError,ValueError):
+                    updater={'status':'inactive','last_success':None,'error':None}
+                self.send(200,{'storage':'SQLite · gespeichert auf diesem Server','activity':self.server.store.activity(),'integrations':[{'name':n,'status':'not_configured','last_success':None,'error':None} for n in ['Google Drive','Gmail','Google Kalender','GitHub']],'jobs':{'status':'inactive','last_success':None},'automation':{'imports':self.server.import_worker.status() if self.server.import_worker else {'status':'inactive','last_success':None,'error':None},'updates':updater},'online':self.server.secure})
             else: self.send(404,{'error':'Nicht gefunden.'})
             return
         allowed={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/manifest.webmanifest':'manifest.webmanifest','/sw.js':'sw.js','/icon.svg':'icon.svg'}
@@ -294,6 +300,7 @@ class Handler(BaseHTTPRequestHandler):
 def make_server(store,host='127.0.0.1',port=8765,origin=''):
     server=ThreadingHTTPServer((host,port),Handler)
     server.store=store;server.origin=origin;server.secure=origin.startswith('https://')
+    server.import_worker=None
     server.attempts={}; server.lock=threading.Lock()
     return server
 
@@ -303,6 +310,7 @@ def main():
     p.add_argument('--data',default=str(Path.home()/'.local/share/agent-x-2/data.sqlite3'))
     p.add_argument('--host',default='127.0.0.1');p.add_argument('--port',type=int,default=8765)
     p.add_argument('--origin',default='');p.add_argument('--output')
+    p.add_argument('--automate',action='store_true',help='Lokale Importpakete aus privatem imports/inbox-Ordner automatisch ergänzen.')
     args=p.parse_args();store=Store(args.data)
     if args.command=='init':
         password=getpass.getpass('Neues Passwort (mindestens 12 Zeichen): ')
@@ -320,8 +328,14 @@ def main():
         if args.origin and (urlsplit(args.origin).scheme!='https' or urlsplit(args.origin).path not in ('','/')):
             raise SystemExit('--origin muss der exakte HTTPS-Ursprung sein, ohne Pfad.')
         server=make_server(store,args.host,args.port,args.origin.rstrip('/'))
+        if args.automate:
+            server.import_worker=ImportWorker(store)
+            server.import_worker.start()
+            print('Automatischer Import: '+str(server.import_worker.directory/'inbox'),flush=True)
         print(f'Agent X erreichbar: {args.origin or "http://127.0.0.1:"+str(args.port)}',flush=True)
         try: server.serve_forever()
         except KeyboardInterrupt: pass
-        finally: server.server_close()
+        finally:
+            if server.import_worker: server.import_worker.close()
+            server.server_close()
 if __name__=='__main__': main()

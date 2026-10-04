@@ -72,3 +72,15 @@ Fachmodule erlauben bereits manuelle Einträge, sind aber noch keine Finanzrechn
 
 ## Update einer vorhandenen Installation
 Server mit Strg+C stoppen. Den Ordner `app/` durch die neue Version ersetzen, Server wieder starten (`py app/server.py serve` unter Windows) und Browser neu laden. Kein erneutes `init` nötig. Standard-Datenbank liegt außerhalb dieses Ordners. Bei einem eigenen `--data` denselben Pfad weiterverwenden. Vor Updates JSON exportieren oder SQLite sichern. Private Importpakete gehören nicht in dieses öffentliche Repository.
+
+## Automatischer Start und Updates
+
+Einmal diese Version vollständig entpacken (auch die beiden Starter im Root sind nötig). Vorhandenen Server mit Strg+C stoppen. Danach unter Windows **Agent-X-starten.cmd** doppelklicken; alternativ `py start_agent_x.py`. Der Starter prüft bei jedem Start den autorisierten Entwicklungszweig `agent-x-2/milestone-1` dieses Repositorys und übernimmt `app/` aus einem festen GitHub-Commit. Er ersetzt keine Root-Dateien und aktualisiert sich selbst nicht. HTTPS-Download, Größenbegrenzung, Pfadprüfung und Python-Syntaxprüfung; bei Download-/Validierungsfehler läuft die vorhandene Version weiter. Lokale Änderungen in `app/` werden dabei ersetzt und als Codebackup erhalten. Codeupdates erfolgen beim Start, nicht während einer laufenden Sitzung. Der Starter nutzt den Standard-Datenpfad und Port 8765. Für eigene Datenpfade weiterhin die manuelle CLI verwenden.
+
+Codebackups: `.local/share/agent-x-2/code-backups/` im Benutzerordner. SQLite-Sicherung vor Serverstart und vor neuen automatischen Importen: `.local/share/agent-x-2/backups/`. Sicherungen enthalten private Daten, bleiben auf dem Rechner und werden nicht automatisch gelöscht. Zur Wiederherstellung Server stoppen und das benötigte App-Codebackup zurückkopieren; bei Bedarf SQLite wie oben wiederherstellen. Liegen private Daten in `app/`, wird das Codeupdate vorsorglich nicht angewandt.
+
+## Automatischer Importordner
+
+Der Starter aktiviert `--automate`. Neue JSON-Pakete nach `.local/share/agent-x-2/imports/inbox/` im Benutzerordner speichern. Unter Windows standardmäßig `%USERPROFILE%\.local\share\agent-x-2\imports\inbox`. Alle 15 Sekunden Prüfung; zwei unveränderte Prüfungen vor dem Import. Erfolgreiche Pakete wandern nach `processed`, fehlerhafte nach `failed`. Wiederholungen werden anhand bestehender IDs übersprungen; manuelle Korrekturen bleiben erhalten. Pakete bleiben reine Daten, Anweisungen darin werden nicht ausgeführt. Letzter Abruf/Import und Fehler sind in Systems & Security sichtbar.
+
+Dies ist **keine direkte ChatGPT-Synchronisation**. Chatwissen muss weiterhin als zulässiges Importpaket bereitgestellt werden. Google-Verbindungen sowie Mail-, Fristen- und Turnier-Scheduler bleiben nicht eingerichtet. Worker nur aktiv, solange der lokale Server läuft. Windows-Autostart und Onlinehosting sind nicht eingerichtet. Die Windows-End-to-End-Prüfung auf deinem Rechner steht aus.
