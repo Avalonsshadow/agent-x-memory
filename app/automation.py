@@ -64,11 +64,11 @@ class ImportWorker:
                 continue
             digest = hashlib.sha256(path.name.encode()).hexdigest()[:12]
             try:
-                if stat.st_size > 2_000_000:
-                    raise ValueError('Import ist größer als 2 MB.')
+                if stat.st_size > 50_000_000:
+                    raise ValueError('Import ist größer als 50 MB.')
                 payload = json.loads(path.read_text(encoding='utf-8-sig'))
                 plan = self.store.import_records(payload, preview=True)
-                if plan['added']:
+                if plan['added'] or plan.get('files_added', 0):
                     snapshot(self.store, self.backups)
                 result = self.store.import_records(payload)
                 path.replace(self.directory / 'processed' / (stamp.replace(':', '-') + '-' + digest + '.json'))

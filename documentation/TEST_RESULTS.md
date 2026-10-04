@@ -3,7 +3,7 @@
 Datum: 2026-10-04. Alle Tests ausschließlich mit temporären Beispieldaten; keine persönlichen Inhalte importiert.
 
 ## Bestanden
-- 18 Python-Tests: geschützte Datenendpunkte; CRUD/Persistenz nach Neuöffnung der Datenbank; Sitzungen nach Neuöffnung; CSRF und fremder Origin; Login-Begrenzung; Datums-/Quellen-/Linkvalidierung; Projektverknüpfung und Löschung; atomarer JSON-Restore; Importanweisungen bleiben Text; Logout; Integrations-/Jobstatus; Pfad-/Headerprüfung; Passwortwechsel; Secure-Cookie.
+- 23 Python-Tests: geschützte Datenendpunkte; CRUD/Persistenz nach Neuöffnung der Datenbank; Sitzungen nach Neuöffnung; CSRF und fremder Origin; Login-Begrenzung; Datums-/Quellen-/Linkvalidierung; Projektverknüpfung und Löschung; atomarer JSON-Restore; Importanweisungen bleiben Text; Logout; Integrations-/Jobstatus; Pfad-/Headerprüfung; Passwortwechsel; Secure-Cookie.
 - `node --check app/web/app.js` und Python-Kompilierung.
 - Frontend-Funktionstest im Node-VM-Testadapter gegen echtes Python/SQLite-Backend: neun Module, Anmeldung, Anlegen, Bearbeitungsformular, Datenabruf, Suche, HTML-Escaping, Quellenantworten, errechneter Aufgabenfortschritt, Export, ergänzender Import inklusive Wiederholung, Verbindungsfehler und Abmeldung. **DOM-Adapter, kein echter Browser.**
 - Lokaler HTTP-Start erfolgreich. Beispielvorschau wird als eigenständige HTML-Datei aus denselben Oberflächenquellen generiert. Sie hat keinen Zugriffsschutz und speichert Änderungen nur bis zum Neuladen; deutlich markiert.
@@ -30,3 +30,6 @@ Geprüft: Vorschau ohne Änderungen, atomarer Import in vorhandene Daten, Erhalt
 
 ## Lokale Automatisierung
 Neue Tests mit isolierten Datenbanken/Dateien: stabile Dateierkennung, automatischer Import, Backup vor Import, Wiederholung, Quarantäne fehlerhafter JSON; Update mit festem Commit, Codebackup, Prüfung gleicher Version, Offline-Fallback, ungültige Python-Syntax und Pfadtraversal ohne Codeverlust. Hintergrundthread mit echtem temporärem SQLite-Bestand gestartet, Import und Ende geprüft. Update-Download wird im Test simuliert. Kein Nachweis einer Windows-End-to-End-Installation oder dauerhafter Ausführung auf dem Nutzerrechner. Die neue Anzeige ist Teil des Frontend-Funktionstests; weitere Hintergrundaufgaben bleiben inaktiv.
+
+## Dokumentausbau
+Geprüft: authentifizierter Upload und Download, CSRF, unzulässige Dateinamen/-typen und Base64, Quellenpflicht, PDF-Seitenextraktion mit synthetischem PDF, DOCX-Absätze, Textzeilen, neueste Version in Volltexttreffern, Originalintegrität/SHA-256, Persistenz nach Datenbank-Neuöffnung, Löschung aller Versionen, atomarer Export/Restore einschließlich beschädigtem Hash, ergänzender Import samt Vorschau und Wiederholung. PDF-Test mit verfügbarer pypdf-Laufzeit; automatischer Paketdownload auf Windows bleibt eine Laufzeitprüfung. Frontend-Adapter prüft zusätzlich echtes Uploadformular, Suchtreffer mit Quellenstelle und Export der Originaldatei. Kein echter Browser-/iPhone-Test.

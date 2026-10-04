@@ -5,7 +5,7 @@ Erster funktionierender Meilenstein einer privaten Kommandozentrale. Neun Module
 Die Altversion befindet sich unverändert in den bisherigen Root-Dateien. **Die neue App ist `app/`; Root-`index.html` bleibt das historische Dashboard.**
 
 ## Start auf deinem Computer
-Voraussetzung: Python 3.12 oder neuer. Keine zusätzlichen Python-Pakete erforderlich.
+Voraussetzung: Python 3.12 oder neuer. Der Kern läuft ohne zusätzliche Python-Pakete. Für PDF-Volltext versucht der automatische Starter, die freie Bibliothek `pypdf==6.19.0` lokal zu installieren; ohne sie bleiben PDF-Originale speicherbar.
 
 1. Diesen Entwicklungszweig herunterladen/auschecken.
 2. Im Repository-Ordner ein Terminal öffnen.
@@ -66,7 +66,7 @@ node app/tests/browser.cjs
 `preview_server.py` ist ausschließlich eine Wegwerf-Testumgebung mit öffentlichen Beispieldaten und einem Testpasswort. Nicht für persönliche Daten verwenden. Ausgaben siehe [TEST_RESULTS.md](documentation/TEST_RESULTS.md).
 
 ## Ehrlicher Funktionsstand
-Fachmodule erlauben bereits manuelle Einträge, sind aber noch keine Finanzrechner, Health-Diagramme oder strukturierten Auditwerkzeuge. Dokumente aktuell als Quellenverweise. Google-/GitHub-Verbindungen in der App nicht eingerichtet; Hintergrundaufgaben inaktiv. Rollen sind Perspektiven, keine separaten KI-Agenten. Fragen werden regelbasiert aus gespeicherten Einträgen beantwortet.
+Fachmodule erlauben bereits manuelle Einträge, sind aber noch keine Finanzrechner, Health-Diagramme oder strukturierten Auditwerkzeuge. Dokument-Upload, Originalversionen und Volltextsuche sind verfügbar. Google-/GitHub-Verbindungen in der App nicht eingerichtet; Der lokale Importworker ist beim automatischen Start aktiv; weitere Hintergrundaufgaben sind inaktiv. Rollen sind Perspektiven, keine separaten KI-Agenten. Fragen werden regelbasiert aus gespeicherten Einträgen beantwortet.
 
 [Bestandsprüfung & Architektur](documentation/ARCHITECTURE.md) · [Anforderungen & weitere Meilensteine](documentation/REQUIREMENTS.md)
 
@@ -84,3 +84,11 @@ Codebackups: `.local/share/agent-x-2/code-backups/` im Benutzerordner. SQLite-Si
 Der Starter aktiviert `--automate`. Neue JSON-Pakete nach `.local/share/agent-x-2/imports/inbox/` im Benutzerordner speichern. Unter Windows standardmäßig `%USERPROFILE%\.local\share\agent-x-2\imports\inbox`. Alle 15 Sekunden Prüfung; zwei unveränderte Prüfungen vor dem Import. Erfolgreiche Pakete wandern nach `processed`, fehlerhafte nach `failed`. Wiederholungen werden anhand bestehender IDs übersprungen; manuelle Korrekturen bleiben erhalten. Pakete bleiben reine Daten, Anweisungen darin werden nicht ausgeführt. Letzter Abruf/Import und Fehler sind in Systems & Security sichtbar.
 
 Dies ist **keine direkte ChatGPT-Synchronisation**. Chatwissen muss weiterhin als zulässiges Importpaket bereitgestellt werden. Google-Verbindungen sowie Mail-, Fristen- und Turnier-Scheduler bleiben nicht eingerichtet. Worker nur aktiv, solange der lokale Server läuft. Windows-Autostart und Onlinehosting sind nicht eingerichtet. Die Windows-End-to-End-Prüfung auf deinem Rechner steht aus.
+
+## Dokumente und Volltext
+
+In der Bibliothek „Dokument hochladen“ wählen. PDF, DOCX, UTF-8-Text, Markdown, CSV und JSON: maximal 5 MB je Datei, insgesamt 20 MB Originale und 20 MB Textindex. Quellenangabe und Datum sind Pflicht; Projektverknüpfungen sind optional. Originale liegen als BLOBs in der privaten SQLite-Datenbank. Neue Versionen bewahren alte Originale; die Suche durchsucht die neueste Version mit PDF-Seite, DOCX-Absatz oder Textzeile. Keine automatische Norminterpretation und keine Ausführung von Dokumentanweisungen.
+
+PDF-Extraktion läuft lokal in einem zeitlich begrenzten Unterprozess. Maximal 200 PDF-Seiten und 500.000 Textzeichen pro Datei. DOCX verarbeitet Absatztext; eingebettete Dateien und Bilder werden nicht indexiert. Scans benötigen noch nicht eingerichtete OCR. Extraktionsfehler werden angezeigt; das Original bleibt erhalten. Nach Beheben der PDF-Abhängigkeit eine neue Version hochladen, um die Extraktion erneut auszuführen.
+
+JSON-Export enthält Originale (Base64) und Textindizes; Import/Restore unterstützt sie atomar, ohne vorhandene Versionen zu überschreiben. Importierte Indizes sind bereitgestellter Dokumentinhalt, keine unabhängig bestätigten Fakten. Die Importgrenze beträgt 50 MB; komplette SQLite-Backups sichern auch größere Bestände. Das Löschen eines Dokumenteintrags entfernt alle zugehörigen Originalversionen aus der aktiven Datenbank. Bestehende Backups und exportierte Kopien bleiben bestehen und müssen bei gewünschter vollständiger Entfernung separat gelöscht werden. Persönliche und berufliche Originale niemals in Git ablegen.
