@@ -23,3 +23,6 @@ Deutsch aktiv; ES/EN-Labelkatalog als Ausgangspunkt, noch keine vollständige Um
 
 ## Designentscheidung 2026-10-04
 Variante 1 „LCARS Cockpit“ wurde vom Nutzer gewählt: dunkles Navy, orange Strukturbänder, Cyan als Fokus und Grün für ergänzende Statushinweise. Zentrale mit heutigen Terminen (alle Bereiche), echten Kennzahlen, Prioritäten, Projekten und kommenden sieben Tagen. Status bleibt als Text erkennbar. Varianten 2 „Tagesplaner“ und 3 „Analytische Zentrale“ bleiben mögliche spätere Ansichten; noch nicht implementiert. Keine Beispieldaten in produktiven Bestand übernommen.
+
+### Konkretisierte Cockpit-Anordnung
+Referenzbild als Layoutbasis: drei Kennzahlen, Heute/Fokus parallel, rechts sieben Tage und Schnellzugriff, darunter aktive Projekte und Verbindungsstatus. Zusätzliche Änderungsübersicht und Datenabfrage bleiben aufklappbar. Mobile Ansicht stapelt die Bereiche und verbirgt die Navigation bis zum Menüaufruf. Ausgegebene Status und Zahlen basieren ausschließlich auf gespeicherten Datensätzen und Integrationsstatus.
