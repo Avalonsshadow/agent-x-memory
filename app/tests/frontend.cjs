@@ -57,7 +57,7 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  const health=await evalJS(`api('/api/records',{method:'POST',body:${JSON.stringify(JSON.stringify({...fixture,kind:'event',title:'Health Calendar <unsafe>',module:'health',due:'2026-10-05',body:'Local event'}))}})`);
  const google=await evalJS(`api('/api/records',{method:'POST',body:${JSON.stringify(JSON.stringify({...fixture,kind:'event',title:'Google multi day',module:'lounge',due:'2026-10-05',source:'Google Kalender · Testfixture',body:'Beginn: 2026-10-05\nEnde: 2026-10-07'}))}})`);
  await evalJS('refresh()');evalJS('calendarCursor="2026-10-05";calendarMode="month";calendarArea="all"');
- const cockpit=evalJS('commander()');assert.match(cockpit,/Heute auf deinem Deck/);assert.match(cockpit,/Die nächsten 7 Tage/);assert.match(cockpit,/Health Calendar &lt;unsafe&gt;/);assert.doesNotMatch(cockpit,/<unsafe>/);
+ const cockpit=evalJS('commander()');assert.match(cockpit,/Heute auf deinem Deck/);assert.match(cockpit,/Die nächsten 7 Tage/);assert.match(cockpit,/deck-twin/);assert.equal((cockpit.match(/data-deck-day=/g)||[]).length,7);assert.match(cockpit,/Schnellzugriff/);assert.match(cockpit,/Nicht verbunden/);assert.match(cockpit,/Health Calendar &lt;unsafe&gt;/);assert.doesNotMatch(cockpit,/<unsafe>/);
  const month=evalJS('calendarMarkup()');assert.match(month,/Health Calendar &lt;unsafe&gt;/);assert.match(month,/Google multi day/);assert.match(month,/Health/);assert.match(month,/Ganztägig/);assert.doesNotMatch(month,/<unsafe>/);
  assert.equal(evalJS('calendarItems().find(e=>e.r.id==="'+google.id+'").end'),'2026-10-06');
  evalJS('calendarArea="health"');assert.doesNotMatch(evalJS('calendarMarkup()'),/Google multi day/);
