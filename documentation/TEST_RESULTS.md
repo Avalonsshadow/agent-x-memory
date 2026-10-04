@@ -42,3 +42,6 @@ Fünf zusätzliche Tests: Zugriffsschutz/CSRF und Desktop-Konfigurationsvalidier
 
 ### Windows-Startkorrektur
 Fehlender sys-Import im Windows-Startpfad korrigiert. Regressionstest führt den tatsächlichen Windows-Installationszweig aus dem AST von main mit isolierten Plattform-/Prozess-Doubles aus. Kein Windows-Rechnerzugriff und keine echte Anmeldung behauptet.
+
+## Gemeinsamer Kalender und manuelle Uhrzeiten
+Frontend-Adapter gegen echten HTTP/SQLite-Server bestätigt: gemeinsame Health-/Lounge-Termine, Quellenherkunft, HTML-Escaping, Monats-/Wochenbereich mit Montagbeginn, Monatswechsel ab 31. Januar, ganztägiges exklusives Enddatum, Bereichsfilter, Dialogöffnung/-schließen, Zeitformular-Serialisierung, Speicherung und Zeit-Roundtrip sowie Zurückweisung von fehlendem Datum und Ende vor Beginn. Keine echte Browser-/iPhone-Layoutprüfung. Kalender nutzt gespeicherte Termine aller Module, archivierte Termine ausgeblendet. Manuelle Start-/Endzeiten werden mit UTC-Offset als ISO im Eintragsinhalt gespeichert; UI stellt lokale Zeitfelder bereit. Bestehende Daten benötigen keine Migration. Kein Schreiben nach Google.
