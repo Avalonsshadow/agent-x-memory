@@ -53,6 +53,8 @@ class Store:
             CREATE TABLE IF NOT EXISTS activity(id INTEGER PRIMARY KEY, action TEXT NOT NULL, record_id TEXT, ts TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, csrf TEXT NOT NULL, expires REAL NOT NULL);
             ''')
+            if 'priority' not in {r['name'] for r in db.execute('PRAGMA table_info(records)')}:
+                db.execute("ALTER TABLE records ADD COLUMN priority TEXT NOT NULL DEFAULT ''")
             documents.init(db)
         os.chmod(self.path, 0o600)
     @contextmanager
@@ -101,7 +103,7 @@ class Store:
     def validate(self, data, db, record_id):
         if not isinstance(data, dict):
             raise ValueError('Eintrag muss ein Objekt sein.')
-        limits = {'title':200, 'body':20000, 'source':1000, 'tags':1000, 'url':2000, 'project_id':100, 'due':10, 'observed':10, 'kind':20, 'module':20, 'status':20, 'evidence':20}
+        limits = {'title':200, 'body':20000, 'source':1000, 'tags':1000, 'url':2000, 'project_id':100, 'due':10, 'observed':10, 'kind':20, 'module':20, 'status':20, 'evidence':20, 'priority':10}
         values = {}
         for key, limit in limits.items():
             value = data.get(key, '')
@@ -110,6 +112,8 @@ class Store:
             values[key] = value.strip()
         if values['kind'] not in KINDS or values['module'] not in MODULES or values['status'] not in STATUSES or values['evidence'] not in EVIDENCE:
             raise ValueError('Ungültiger Typ oder Status.')
+        if values['priority'] not in ('','high','medium','low'):
+            raise ValueError('Ungültige Priorität.')
         if not values['title'] or not values['source'] or not values['observed']:
             raise ValueError('Titel, Quelle und Datum sind erforderlich.')
         for key in ('due','observed'):
@@ -129,6 +133,8 @@ class Store:
             old = db.execute('SELECT * FROM records WHERE id=?', (record_id_new,)).fetchone()
             if record_id and not old:
                 raise LookupError('Eintrag nicht gefunden.')
+            if old and 'priority' not in data:
+                data={**data,'priority':old['priority']}
             values = self.validate(data, db, record_id_new)
             if old and old['kind']=='document' and values['kind']!='document' and db.execute('SELECT 1 FROM documents WHERE record_id=?',(record_id_new,)).fetchone():
                 raise ValueError('Dokument mit Originaldateien kann nicht umgewandelt werden.')
