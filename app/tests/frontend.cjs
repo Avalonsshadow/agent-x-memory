@@ -54,6 +54,26 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  await node('#content').listeners.click({target:{closest(){return {id:'calendar-list',dataset:{}}}}});
  assert.match(node('#calendar-options').innerHTML,/data-calendar/);assert.match(node('#calendar-options').innerHTML,/Auswahl speichern/);
  assert.doesNotMatch(node('#calendar-list').innerHTML,/data-calendar/);context.fetch=beforeCalendarFetch;
+ const health=await evalJS(`api('/api/records',{method:'POST',body:${JSON.stringify(JSON.stringify({...fixture,kind:'event',title:'Health Calendar <unsafe>',module:'health',due:'2026-10-05',body:'Local event'}))}})`);
+ const google=await evalJS(`api('/api/records',{method:'POST',body:${JSON.stringify(JSON.stringify({...fixture,kind:'event',title:'Google multi day',module:'lounge',due:'2026-10-05',source:'Google Kalender · Testfixture',body:'Beginn: 2026-10-05\nEnde: 2026-10-07'}))}})`);
+ await evalJS('refresh()');evalJS('calendarCursor="2026-10-05";calendarMode="month";calendarArea="all"');
+ const month=evalJS('calendarMarkup()');assert.match(month,/Health Calendar &lt;unsafe&gt;/);assert.match(month,/Google multi day/);assert.match(month,/Health/);assert.match(month,/Ganztägig/);assert.doesNotMatch(month,/<unsafe>/);
+ assert.equal(evalJS('calendarItems().find(e=>e.r.id==="'+google.id+'").end'),'2026-10-06');
+ evalJS('calendarArea="health"');assert.doesNotMatch(evalJS('calendarMarkup()'),/Google multi day/);
+ evalJS('calendarArea="all";calendarMode="week"');assert.equal(evalJS('calendarRange()[0]'),'2026-10-05');assert.equal(evalJS('calendarRange()[1]'),'2026-10-11');
+ await node('#open-calendar').listeners.click();assert.equal(node('#calendar-dialog').open,true);
+ await node('#calendar-dialog').listeners.click({target:{closest(){return {dataset:{calendarNav:'1'}}}}});assert.equal(evalJS('calendarCursor'),'2026-10-12');
+ evalJS('calendarCursor="2026-01-31";calendarMode="month"');await node('#calendar-dialog').listeners.click({target:{closest(){return {dataset:{calendarNav:'1'}}}}});assert.equal(evalJS('calendarCursor'),'2026-02-01');
+ await node('#calendar-close').listeners.click();assert.equal(node('#calendar-dialog').open,false);
+ const timedPayload={...fixture,kind:'event',module:'health',title:'Timed local',due:'2026-10-05',start_time:'09:30',end_time:'10:45',end_date:'2026-10-05'};
+ const timed=await evalJS(`(()=>{const d=${JSON.stringify(timedPayload)};applyEventTime(d);return d})()`);
+ assert.equal(timed.start_time,undefined);assert.match(timed.body,/^Beginn: /);
+ const savedTime=await evalJS(`api('/api/records',{method:'POST',body:${JSON.stringify(JSON.stringify(timed))}})`);
+ await evalJS('refresh()');assert.equal(evalJS(`eventTiming(records.find(r=>r.id==='${savedTime.id}')).start_time`),'09:30');
+ assert.equal(evalJS(`eventTiming(records.find(r=>r.id==='${savedTime.id}')).end_time`),'10:45');
+ assert.throws(()=>evalJS(`applyEventTime(${JSON.stringify({...timedPayload,end_time:'08:00'})})`),/Ende muss nach/);
+ assert.throws(()=>evalJS(`applyEventTime(${JSON.stringify({...timedPayload,due:''})})`),/Datum und Start/);
+
  const oldFetch=context.fetch;context.fetch=async()=>{throw new Error('Disconnected')};
  await assert.rejects(evalJS("api('/api/records')"),/nicht erreichbar/);context.fetch=oldFetch;
  await evalJS(`api('/api/records/${result.id}',{method:'DELETE'})`);
