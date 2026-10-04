@@ -20,3 +20,6 @@ M6: echter Scheduler, Fristen und Tagesübersicht; dringende Nachrichten und Poo
 ## Grenzen
 Keine Bank-/Handelsaktionen. Keine Therapieentscheidungen. Keine erfundenen Messwerte oder Normtexte. Kein automatischer Zugriff auf andere Chats. Keine echten Unternehmensdaten ohne freigegebene Umgebung. Öffentliche Veröffentlichung und kostenpflichtige Dienste benötigen separate Zustimmung.
 Deutsch aktiv; ES/EN-Labelkatalog als Ausgangspunkt, noch keine vollständige Umschaltung.
+
+## Designentscheidung 2026-10-04
+Variante 1 „LCARS Cockpit“ wurde vom Nutzer gewählt: dunkles Navy, orange Strukturbänder, Cyan als Fokus und Grün für ergänzende Statushinweise. Zentrale mit heutigen Terminen (alle Bereiche), echten Kennzahlen, Prioritäten, Projekten und kommenden sieben Tagen. Status bleibt als Text erkennbar. Varianten 2 „Tagesplaner“ und 3 „Analytische Zentrale“ bleiben mögliche spätere Ansichten; noch nicht implementiert. Keine Beispieldaten in produktiven Bestand übernommen.
