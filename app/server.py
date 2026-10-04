@@ -152,6 +152,42 @@ class Store:
             db.execute('INSERT INTO activity(action,record_id,ts) VALUES (?,?,?)',('restored','',now()))
         return len(records)
 
+    def import_records(self, payload, preview=False):
+        """Add records atomically; never overwrite existing IDs. Preview rolls back."""
+        if not isinstance(payload, dict) or payload.get('schema_version') != 1 or not isinstance(payload.get('records'), list) or len(payload['records']) > 10000:
+            raise ValueError('Ungültiges Agent-X-Importpaket.')
+        result = {'added': 0, 'skipped': 0, 'conflicts': 0, 'modules': {}}
+        seen = set()
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            db.execute('SAVEPOINT import_preview')
+            for r in sorted(payload['records'], key=lambda r: 0 if isinstance(r, dict) and r.get('kind') == 'project' else 1):
+                if not isinstance(r, dict) or not isinstance(r.get('id'), str) or len(r['id']) != 32 or any(c not in '0123456789abcdef' for c in r['id']) or r['id'] in seen:
+                    raise ValueError('Ungültige oder doppelte ID.')
+                seen.add(r['id'])
+                values = self.validate(r, db, r['id'])
+                for key in ('created', 'updated'):
+                    if not isinstance(r.get(key), str):
+                        raise ValueError('Ungültiger Zeitstempel: ' + key)
+                    dt.datetime.fromisoformat(r[key])
+                old = db.execute('SELECT * FROM records WHERE id=?', (r['id'],)).fetchone()
+                if old:
+                    result['skipped'] += 1
+                    if any(old[key] != value for key, value in values.items()):
+                        result['conflicts'] += 1
+                    continue
+                values.update(id=r['id'], created=r['created'], updated=r['updated'])
+                keys = list(values)
+                db.execute('INSERT INTO records (' + ','.join(keys) + ') VALUES (' + ','.join('?' for _ in keys) + ')', [values[k] for k in keys])
+                result['added'] += 1
+                result['modules'][values['module']] = result['modules'].get(values['module'], 0) + 1
+            if preview:
+                db.execute('ROLLBACK TO import_preview')
+            elif result['added']:
+                db.execute('INSERT INTO activity(action,record_id,ts) VALUES (?,?,?)', ('imported', '', now()))
+            db.execute('RELEASE import_preview')
+        return result
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass # do not log personal titles, cookies, or request contents
@@ -247,6 +283,8 @@ class Handler(BaseHTTPRequestHandler):
                 if method=='PUT': self.send(200,self.server.store.save(self.body(),record_id))
                 else: self.server.store.delete(record_id); self.send(200,{'ok':True})
             elif path=='/api/restore' and method=='POST': self.send(200,{'restored':self.server.store.restore(self.body())})
+            elif path in ('/api/import', '/api/import/preview') and method=='POST':
+                self.send(200,self.server.store.import_records(self.body(), preview=path.endswith('/preview')))
             else: self.send(404,{'error':'Nicht gefunden.'})
         except (ValueError, TypeError, KeyError) as e: self.send(400,{'error':str(e)})
         except LookupError as e: self.send(404,{'error':str(e)})

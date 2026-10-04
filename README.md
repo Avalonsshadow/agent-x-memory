@@ -27,7 +27,7 @@ Daten werden standardmäßig im Benutzerverzeichnis unter `.local/share/agent-x-
 Windows: falls `python` nicht verfügbar, `py -3` verwenden. Mac/Linux: gegebenenfalls `python3`.
 
 ## Backup und Wiederherstellung
-In Systems & Security JSON exportieren; private Exportdateien sicher verwahren. JSON-Import ist nur in einen leeren Datenbestand möglich. Keine bestehenden Einträge werden überschrieben. Eintragslöschungen sind endgültig; vorher bei Bedarf exportieren.
+In Systems & Security JSON exportieren; private Exportdateien sicher verwahren. „Einträge ergänzen“ importiert JSON-Pakete auch in den bestehenden Datenbestand: Vorschau, neue Einträge, vorhandene IDs überspringen. Abweichender Inhalt derselben ID wird als Konflikt gezählt und nicht übernommen. Keine bestehenden Einträge werden überschrieben. „Backup einlesen“ bleibt auf einen leeren Datenbestand beschränkt. Eintragslöschungen sind endgültig; vorher bei Bedarf exportieren.
 
 Komplette SQLite-Sicherung (enthält Zugangskonfiguration, privat aufbewahren):
 
@@ -69,3 +69,6 @@ node app/tests/browser.cjs
 Fachmodule erlauben bereits manuelle Einträge, sind aber noch keine Finanzrechner, Health-Diagramme oder strukturierten Auditwerkzeuge. Dokumente aktuell als Quellenverweise. Google-/GitHub-Verbindungen in der App nicht eingerichtet; Hintergrundaufgaben inaktiv. Rollen sind Perspektiven, keine separaten KI-Agenten. Fragen werden regelbasiert aus gespeicherten Einträgen beantwortet.
 
 [Bestandsprüfung & Architektur](documentation/ARCHITECTURE.md) · [Anforderungen & weitere Meilensteine](documentation/REQUIREMENTS.md)
+
+## Update einer vorhandenen Installation
+Server mit Strg+C stoppen. Den Ordner `app/` durch die neue Version ersetzen, Server wieder starten (`py app/server.py serve` unter Windows) und Browser neu laden. Kein erneutes `init` nötig. Standard-Datenbank liegt außerhalb dieses Ordners. Bei einem eigenen `--data` denselben Pfad weiterverwenden. Vor Updates JSON exportieren oder SQLite sichern. Private Importpakete gehören nicht in dieses öffentliche Repository.

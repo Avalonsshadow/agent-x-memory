@@ -86,6 +86,34 @@ class AppTests(unittest.TestCase):
     def test_logout_invalidates_access(self):
         self.login();self.assertEqual(self.call('/api/logout','POST',{})[0],200)
         self.assertEqual(self.call('/api/export')[0],401)
+    def test_additive_import_preview_idempotency_and_conflicts(self):
+        self.login()
+        original=self.call('/api/records','POST',self.record())[1]
+        package={'schema_version':1,'records':[
+            dict(original,title='Muss erhalten bleiben'),
+            dict(original,id='a'*32,kind='project',title='Importprojekt',project_id=''),
+            dict(original,id='b'*32,title='Importaufgabe',project_id='a'*32)]}
+        status,plan=self.call('/api/import/preview','POST',package)
+        self.assertEqual(status,200);self.assertEqual(plan['added'],2)
+        self.assertEqual(plan['skipped'],1);self.assertEqual(plan['conflicts'],1)
+        self.assertEqual(self.store.records(),[original])
+        self.assertEqual(self.call('/api/import','POST',package)[1],plan)
+        self.assertEqual(next(r for r in self.store.records() if r['id']==original['id']),original)
+        self.assertEqual(self.call('/api/import','POST',package)[1]['added'],0)
+        self.assertEqual(len(Store(self.store.path).records()),3)
+    def test_additive_import_atomicity_and_access(self):
+        self.assertEqual(self.call('/api/import','POST',{})[0],401)
+        self.assertEqual(self.call('/api/import/preview','POST',{})[0],401)
+        self.login()
+        original=self.call('/api/records','POST',self.record())[1]
+        package={'schema_version':1,'records':[dict(original,id='a'*32),dict(original,id='b'*32,project_id='missing')]}
+        for endpoint in ['/api/import','/api/import/preview']:
+            self.assertEqual(self.call(endpoint,'POST',package,{'X-CSRF-Token':'wrong'})[0],403)
+            self.assertEqual(self.call(endpoint,'POST',package)[0],400)
+            self.assertEqual(self.store.records(),[original])
+        package['records'][1]=dict(original,id='a'*32)
+        self.assertEqual(self.call('/api/import','POST',package)[0],400)
+        self.assertEqual(self.store.records(),[original])
     def test_integration_state_is_honest(self):
         self.login();data=self.call('/api/system')[1]
         self.assertEqual(len(data['integrations']),4)
