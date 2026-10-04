@@ -1,7 +1,7 @@
 // Node VM functional tests. Deliberately not a browser/layout certification.
 const vm=require('node:vm');const fs=require('node:fs');const assert=require('node:assert/strict');const path=require('node:path');
 const nodes=new Map();
-function node(selector){if(!nodes.has(selector))nodes.set(selector,{innerHTML:'',textContent:'',hidden:false,value:'',open:false,dataset:{},style:{},listeners:{},classList:{toggle(){return true},remove(){}},addEventListener(type,fn){this.listeners[type]=fn},setAttribute(){},replaceChildren(){this.innerHTML=''},close(){this.open=false},showModal(){this.open=true},focus(){},reset(){},querySelector(){return node(selector+'/button')}});return nodes.get(selector)}
+function node(selector){if(!nodes.has(selector))nodes.set(selector,{innerHTML:'',textContent:'',hidden:false,value:'',open:false,dataset:{},style:{},listeners:{},classList:{toggle(){return true},remove(){}},addEventListener(type,fn){const prev=this.listeners[type];this.listeners[type]=prev?async(...args)=>{await prev(...args);await fn(...args)}:fn},setAttribute(){},replaceChildren(){this.innerHTML=''},close(){this.open=false},showModal(){this.open=true},focus(){},reset(){},querySelector(){return node(selector+'/button')}});return nodes.get(selector)}
 const document={querySelector:node,querySelectorAll:()=>[],createElement:()=>({click(){}})};
 let cookies='',exportURL;
 const context=vm.createContext({document,location:{hash:''},navigator:{},window:{addEventListener(){}},console,setTimeout,clearTimeout,Date,URL:{createObjectURL(blob){exportURL=blob;return 'blob:example'},revokeObjectURL(){}},Blob,btoa:s=>Buffer.from(s,'binary').toString('base64'),confirm:()=>true,FormData:class{constructor(target){this.data=target.formData}*[Symbol.iterator](){yield*Object.entries(this.data)}},fetch:async(url,options)=>{const response=await fetch('http://127.0.0.1:8765'+url,{...options,headers:{...options.headers,Cookie:cookies}});const cookie=response.headers.get('set-cookie');if(cookie)cookies=cookie.split(';')[0];return response;}});
@@ -23,7 +23,7 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  await editor.listeners.submit({preventDefault(){},target:editor});
  await evalJS('refresh()');
  assert.equal(evalJS(`records.find(r=>r.id==='${result.id}').title`),'Frontend · bearbeitet');
- evalJS("ask('Welche Fristen stehen an?')");assert.match(node('#answer').innerHTML,/Quelle: Frontend-Testfixture/);
+ await evalJS("ask('Welche Fristen stehen an?')");assert.match(node('#answer').innerHTML,/Quelle: Frontend-Testfixture/);
  assert.match(evalJS("projectProgress(records.find(r=>r.kind==='project'))"),/1 \/ 2 Aufgaben erledigt · 50 %/);
  for(const view of ['lounge','library','economics','health','laboratory','crew','projects','systems']){context.location.hash='#'+view;node('#search').value='';evalJS('render()');assert.match(node('#content').innerHTML,/<h1>/);}
  assert.match(node('#content').innerHTML,/Nicht eingerichtet/);assert.match(node('#content').innerHTML,/Inaktiv/);
@@ -34,6 +34,10 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  assert.equal(evalJS("attachments.filter(d=>d.filename==='frontend.txt').length"),1);
  node('#search').value='FrontendDokument321';evalJS('render()');await new Promise(r=>setTimeout(r,100));
  assert.match(node('#document-results').innerHTML,/Zeile 1/);assert.match(node('#document-results').innerHTML,/Dokument-Testfixture/);
+ await evalJS("ask('Was steht über FrontendDokument321 im Dokument?', '#assistant-answer')");
+ assert.match(node('#assistant-answer').innerHTML,/Zeile 1/);assert.match(node('#assistant-answer').innerHTML,/Dokument-Testfixture/);
+ await node('#open-assistant').listeners.click();assert.equal(node('#assistant-dialog').open,true);
+ await node('#assistant-close').listeners.click();assert.equal(node('#assistant-dialog').open,false);
  await node('#content').listeners.click({target:{closest(){return {id:'export',dataset:{}}}}});
  assert.equal(JSON.parse(await exportURL.text()).schema_version,1);
  assert.equal(JSON.parse(await exportURL.text()).documents.length,1);

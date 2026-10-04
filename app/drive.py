@@ -31,6 +31,7 @@ def request(url, data=None, token=None, limit=5_000_000):
     except URLError: raise ValueError('Google ist nicht erreichbar. Verbindung prüfen.') from None
 
 class Drive:
+    scope=SCOPE
     def __init__(self,store,transport=request):
         self.store=store;self.transport=transport;self.lock=threading.RLock();self.pending={}
         self.path=store.path.parent/'google-drive-private.json'
@@ -43,7 +44,7 @@ class Drive:
         temp=self.path.with_suffix('.tmp');temp.write_text(json.dumps(self.state));os.chmod(temp,0o600);temp.replace(self.path)
     def status(self):
         with self.lock:
-            return {'name':'Google Drive','status':'connected' if self.state.get('refresh_token') else 'configured' if self.state.get('client_id') else 'not_configured','last_success':self.state.get('last_success'),'last_check':self.state.get('last_check'),'error':self.state.get('error'),'scope':SCOPE,'selected':self.state.get('selected',[]),'sync_interval':900,'local_only':True}
+            return {'name':'Google Drive','status':'connected' if self.state.get('refresh_token') else 'configured' if self.state.get('client_id') else 'not_configured','last_success':self.state.get('last_success'),'last_check':self.state.get('last_check'),'error':self.state.get('error'),'scope':self.scope,'selected':self.state.get('selected',[]),'sync_interval':900,'local_only':True}
     def configure(self,payload):
         client=payload.get('installed') if isinstance(payload,dict) else None
         if not isinstance(client,dict) or not re.fullmatch(r'[A-Za-z0-9_-]+\.apps\.googleusercontent\.com',client.get('client_id','')) or not isinstance(client.get('client_secret'),str) or not 1<=len(client['client_secret'])<=1000:
@@ -58,7 +59,7 @@ class Drive:
             state=secrets.token_urlsafe(32);verifier=secrets.token_urlsafe(48)
             self.pending[state]={'verifier':verifier,'redirect':redirect,'session':session,'expires':time.time()+600}
             challenge=base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip('=')
-            return {'url':'https://accounts.google.com/o/oauth2/v2/auth?'+urlencode({'client_id':self.state['client_id'],'redirect_uri':redirect,'response_type':'code','scope':SCOPE,'state':state,'code_challenge':challenge,'code_challenge_method':'S256','access_type':'offline','prompt':'consent'})}
+            return {'url':'https://accounts.google.com/o/oauth2/v2/auth?'+urlencode({'client_id':self.state['client_id'],'redirect_uri':redirect,'response_type':'code','scope':self.scope,'state':state,'code_challenge':challenge,'code_challenge_method':'S256','access_type':'offline','prompt':'consent'})}
     def complete(self,state,code,error=''):
         with self.lock:
             pending=self.pending.pop(state,None)
@@ -66,7 +67,7 @@ class Drive:
             if error: raise ValueError('Google-Anmeldung abgebrochen oder verweigert.')
             if not isinstance(code,str) or not 1<=len(code)<=4096: raise ValueError('Ungültiger Google-Code.')
             result=json.loads(self.transport('https://oauth2.googleapis.com/token',{'client_id':self.state['client_id'],'client_secret':self.state['client_secret'],'code':code,'code_verifier':pending['verifier'],'redirect_uri':pending['redirect'],'grant_type':'authorization_code'}))
-            if SCOPE not in result.get('scope','').split() or not result.get('refresh_token') or not result.get('access_token'): raise ValueError('Google hat den benötigten Lesezugriff nicht erteilt.')
+            if self.scope not in result.get('scope','').split() or not result.get('refresh_token') or not result.get('access_token'): raise ValueError('Google hat den benötigten Lesezugriff nicht erteilt.')
             self.state.update(refresh_token=result['refresh_token'],access_token=result['access_token'],expires=time.time()+int(result.get('expires_in',3600))-60,error=None);self.save()
     def token(self):
         if not self.state.get('refresh_token'): raise ValueError('Google Drive ist noch nicht verbunden.')

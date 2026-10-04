@@ -18,6 +18,11 @@ from urllib.parse import urlsplit, parse_qs, quote
 from automation import ImportWorker
 import documents
 import drive
+import assistant
+import google_calendar
+import windows_startup
+from briefings import Briefings
+import subprocess
 from live_updates import Updates
 
 WEB = Path(__file__).parent / 'web'
@@ -249,14 +254,15 @@ class Handler(BaseHTTPRequestHandler):
         return True
     def do_GET(self):
         path=urlsplit(self.path).path
-        if path=='/api/google/callback':
+        if path in ('/api/google/callback','/api/calendar/callback'):
+            connection=self.server.calendar if path=='/api/calendar/callback' else self.server.drive
             query=parse_qs(urlsplit(self.path).query)
             try:
-                self.server.drive.complete(query.get('state',[''])[0],query.get('code',[''])[0],query.get('error',[''])[0])
-                self.send(200,b'<h1>Google Drive verbunden</h1><a href="/#systems">Zurueck zu Agent X</a>','text/html; charset=utf-8')
+                connection.complete(query.get('state',[''])[0],query.get('code',[''])[0],query.get('error',[''])[0])
+                self.send(200,b'<h1>Google verbunden</h1><a href="/#systems">Zurueck zu Agent X</a>','text/html; charset=utf-8')
             except (ValueError,KeyError,TypeError):
-                with self.server.drive.lock:
-                    self.server.drive.state['error']='Google-Anmeldung fehlgeschlagen oder abgelaufen. Erneut verbinden.';self.server.drive.save()
+                with connection.lock:
+                    connection.state['error']='Google-Anmeldung fehlgeschlagen oder abgelaufen. Erneut verbinden.';connection.save()
                 self.send(400,{'error':'Google-Anmeldung fehlgeschlagen oder abgelaufen. In Agent X erneut verbinden.'})
             return
         if path=='/api/session':
@@ -264,7 +270,12 @@ class Handler(BaseHTTPRequestHandler):
             self.send(200,{'authenticated':bool(csrf),'csrf':csrf,'configured':self.server.store.configured()});return
         if path.startswith('/api/'):
             if not self.auth(): return
-            if path=='/api/drive/status': self.send(200,self.server.drive.status())
+            if path=='/api/calendar/status': self.send(200,self.server.calendar.status())
+            elif path=='/api/calendar/calendars':
+                try: self.send(200,self.server.calendar.calendars())
+                except (ValueError,KeyError,TypeError) as e: self.send(400,{'error':str(e) if isinstance(e,ValueError) else 'Ungültige Google-Antwort.'})
+            elif path=='/api/briefing': self.send(200,assistant.answer(self.server.store,'Was benötigt heute meine Aufmerksamkeit?'))
+            elif path=='/api/drive/status': self.send(200,self.server.drive.status())
             elif path=='/api/drive/files':
                 try: self.send(200,self.server.drive.files(parse_qs(urlsplit(self.path).query).get('page',[''])[0]))
                 except (ValueError,KeyError,TypeError) as e: self.send(400,{'error':str(e) if isinstance(e,ValueError) else 'Ungültige Google-Antwort.'})
@@ -284,7 +295,7 @@ class Handler(BaseHTTPRequestHandler):
                     updater=json.loads((self.server.store.path.parent/'update-status.json').read_text())
                 except (OSError,ValueError):
                     updater={'status':'inactive','last_success':None,'error':None}
-                self.send(200,{'storage':'SQLite · gespeichert auf diesem Server','activity':self.server.store.activity(),'drive':self.server.drive.status(),'drive_worker_active':bool(self.server.drive_worker),'live_updates':{'active':bool(self.server.updates),'error':self.server.updates.error if self.server.updates else None},'integrations':[self.server.drive.status()]+[{'name':n,'status':'not_configured','last_success':None,'error':None} for n in ['Gmail','Google Kalender','GitHub']],'jobs':{'status':'inactive','last_success':None},'automation':{'imports':self.server.import_worker.status() if self.server.import_worker else {'status':'inactive','last_success':None,'error':None},'updates':updater},'documents':{'count':len(documents.listing(self.server.store)),'pdf_available':documents.pdf_available(),'ocr':'inactive'},'online':self.server.secure})
+                self.send(200,{'storage':'SQLite · gespeichert auf diesem Server','activity':self.server.store.activity(),'calendar':self.server.calendar.status(),'calendar_worker_active':bool(self.server.calendar_worker),'autostart':windows_startup.status(self.server.store.path.parent),'drive':self.server.drive.status(),'drive_worker_active':bool(self.server.drive_worker),'live_updates':{'active':bool(self.server.updates),'error':self.server.updates.error if self.server.updates else None},'integrations':[self.server.drive.status(),self.server.calendar.status()]+[{'name':n,'status':'not_configured','last_success':None,'error':None} for n in ['Gmail','GitHub']],'jobs':self.server.briefings.status() if self.server.briefings else {'status':'inactive','last_success':None},'automation':{'imports':self.server.import_worker.status() if self.server.import_worker else {'status':'inactive','last_success':None,'error':None},'updates':updater},'documents':{'count':len(documents.listing(self.server.store)),'pdf_available':documents.pdf_available(),'ocr':'inactive'},'online':self.server.secure})
             else: self.send(404,{'error':'Nicht gefunden.'})
             return
         allowed={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/manifest.webmanifest':'manifest.webmanifest','/sw.js':'sw.js','/icon.svg':'icon.svg'}
@@ -321,7 +332,21 @@ class Handler(BaseHTTPRequestHandler):
                 else: self.send(401,{'error':'Anmeldung fehlgeschlagen.'})
                 return
             if not self.auth(True): return
-            if path.startswith('/api/drive/') and method=='POST':
+            if path=='/api/assistant' and method=='POST': self.send(200,assistant.answer(self.server.store,self.body().get('question')))
+            elif path.startswith('/api/calendar/') and method=='POST':
+                action=path.rsplit('/',1)[-1]
+                if action=='configure': self.send(200,self.server.calendar.configure(self.body()))
+                elif action=='connect':
+                    if self.server.origin or self.server.server_address[0]!='127.0.0.1': raise ValueError('Desktop-Google-Anmeldung ist nur am lokalen Rechner verfügbar.')
+                    self.server.calendar.configure_from_drive(self.server.drive)
+                    self.send(200,self.server.calendar.begin('http://127.0.0.1:'+str(self.server.server_port)+'/api/calendar/callback',self.token()))
+                elif action=='select':self.send(200,self.server.calendar.select(self.body().get('ids')))
+                elif action=='sync':self.send(200,self.server.calendar.sync())
+                elif action=='disconnect':self.send(200,self.server.calendar.disconnect())
+                else:self.send(404,{'error':'Nicht gefunden.'})
+            elif path=='/api/autostart/remove' and method=='POST': self.send(200,windows_startup.remove(self.server.store.path.parent))
+            elif path=='/api/autostart/install' and method=='POST':self.send(200,windows_startup.install(self.server.store.path.parent,Path(__file__).resolve().parent.parent))
+            elif path.startswith('/api/drive/') and method=='POST':
                 action=path.rsplit('/',1)[-1]
                 if action=='configure': self.send(200,self.server.drive.configure(self.body()))
                 elif action=='connect':
@@ -356,7 +381,7 @@ class Handler(BaseHTTPRequestHandler):
 def make_server(store,host='127.0.0.1',port=8765,origin=''):
     server=ThreadingHTTPServer((host,port),Handler)
     server.store=store;server.origin=origin;server.secure=origin.startswith('https://')
-    server.import_worker=None
+    server.import_worker=None;server.calendar=google_calendar.Calendar(store);server.calendar_worker=None;server.briefings=None
     server.drive=drive.Drive(store);server.drive_worker=None;server.updates=None
     server.attempts={}; server.lock=threading.Lock()
     return server
@@ -368,6 +393,7 @@ def main():
     p.add_argument('--host',default='127.0.0.1');p.add_argument('--port',type=int,default=8765)
     p.add_argument('--origin',default='');p.add_argument('--output')
     p.add_argument('--automate',action='store_true',help='Lokale Importpakete aus privatem imports/inbox-Ordner automatisch ergänzen.')
+    p.add_argument('--managed-start',action='store_true')
     args=p.parse_args();store=Store(args.data)
     if args.command=='init':
         password=getpass.getpass('Neues Passwort (mindestens 12 Zeichen): ')
@@ -385,9 +411,23 @@ def main():
         if args.origin and (urlsplit(args.origin).scheme!='https' or urlsplit(args.origin).path not in ('','/')):
             raise SystemExit('--origin muss der exakte HTTPS-Ursprung sein, ohne Pfad.')
         server=make_server(store,args.host,args.port,args.origin.rstrip('/'))
+        if args.automate and os.name=='nt' and not args.origin and args.host=='127.0.0.1' and args.port==8765 and Path(args.data)==Path.home()/'.local/share/agent-x-2/data.sqlite3':
+            try:
+                old=windows_startup.status(store.path.parent)
+                if old.get('status')!='removed':
+                    report=windows_startup.install(store.path.parent,Path(__file__).resolve().parent.parent)
+                    if not args.managed_start:
+                        python=Path(sys.executable);silent=python.with_name('pythonw.exe')
+                        subprocess.Popen([str(silent if silent.exists() else python),report['runner']],creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+                    else:
+                        report.update(status='running',runtime_verified=True);(store.path.parent/'autostart-status.json').write_text(json.dumps(report))
+            except (OSError,ValueError):
+                (store.path.parent/'autostart-status.json').write_text(json.dumps({'status':'error','error':'Windows-Autostart konnte nicht eingerichtet werden.','runtime_verified':False}))
         if args.automate:
             print('PDF-Texterkennung wird geprüft …',flush=True)
             documents.prepare_pdf()
+            server.calendar_worker=drive.Worker(server.calendar);server.calendar_worker.start()
+            server.briefings=Briefings(store);server.briefings.start()
             server.drive_worker=drive.Worker(server.drive);server.drive_worker.start()
             server.updates=Updates(server);server.updates.start()
             server.import_worker=ImportWorker(store)
@@ -399,6 +439,8 @@ def main():
         finally:
             if server.updates: server.updates.close()
             if server.drive_worker: server.drive_worker.close()
+            if server.calendar_worker: server.calendar_worker.close()
+            if server.briefings: server.briefings.close()
             if server.import_worker: server.import_worker.close()
             server.server_close()
         if server.updates and server.updates.restart: server.updates.apply()
