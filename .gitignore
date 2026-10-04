@@ -1,0 +1,11 @@
+# Runtime state must never enter this public repository
+.env
+.env.*
+!.env.example
+*.sqlite*
+*.db
+__pycache__/
+app/private/
+node_modules/
+test-results/
+playwright-report/
