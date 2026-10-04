@@ -21,6 +21,7 @@ import drive
 import assistant
 import google_calendar
 import windows_startup
+import private_access
 from briefings import Briefings
 import subprocess
 import sys
@@ -225,7 +226,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Referrer-Policy','no-referrer')
         self.send_header('X-Frame-Options','DENY')
         self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
-        if self.server.secure:
+        if self.server.secure or self.private_origin():
             self.send_header('Strict-Transport-Security','max-age=31536000')
         if cookie:
             self.send_header('Set-Cookie',cookie)
@@ -244,8 +245,10 @@ class Handler(BaseHTTPRequestHandler):
             return cookie['agentx'].value if 'agentx' in cookie else ''
         except Exception:
             return ''
+    def private_origin(self):
+        return private_access.request_origin(self.server.store.path.parent,self.headers.get("Host","")) if self.client_address[0] in ("127.0.0.1","::1") else ""
     def cookie(self, token, age=43200):
-        return 'agentx='+token+'; HttpOnly; SameSite=Strict; Path=/; Max-Age='+str(age)+('; Secure' if self.server.secure else '')
+        return 'agentx='+token+'; HttpOnly; SameSite=Strict; Path=/; Max-Age='+str(age)+('; Secure' if self.server.secure or self.private_origin() else '')
     def auth(self, mutate=False):
         csrf = self.server.store.session(self.token())
         if not csrf:
@@ -312,7 +315,7 @@ class Handler(BaseHTTPRequestHandler):
         path=urlsplit(self.path).path
         # Reject cross-origin requests, including login CSRF. Proxy deployment pins origin.
         origin=self.headers.get('Origin')
-        expected=self.server.origin or ('http://'+self.headers.get('Host',''))
+        expected=self.server.origin or self.private_origin() or ('http://'+self.headers.get('Host',''))
         if origin and origin!=expected:
             self.send(403,{'error':'Fremder Ursprung blockiert.'});return
         try:
@@ -338,7 +341,7 @@ class Handler(BaseHTTPRequestHandler):
                 action=path.rsplit('/',1)[-1]
                 if action=='configure': self.send(200,self.server.calendar.configure(self.body()))
                 elif action=='connect':
-                    if self.server.origin or self.server.server_address[0]!='127.0.0.1': raise ValueError('Desktop-Google-Anmeldung ist nur am lokalen Rechner verfügbar.')
+                    if self.server.origin or self.private_origin() or self.server.server_address[0]!='127.0.0.1': raise ValueError('Desktop-Google-Anmeldung ist nur am lokalen Rechner verfügbar.')
                     self.server.calendar.configure_from_drive(self.server.drive)
                     self.send(200,self.server.calendar.begin('http://127.0.0.1:'+str(self.server.server_port)+'/api/calendar/callback',self.token()))
                 elif action=='select':self.send(200,self.server.calendar.select(self.body().get('ids')))
@@ -351,7 +354,7 @@ class Handler(BaseHTTPRequestHandler):
                 action=path.rsplit('/',1)[-1]
                 if action=='configure': self.send(200,self.server.drive.configure(self.body()))
                 elif action=='connect':
-                    if self.server.origin or self.server.server_address[0]!='127.0.0.1': raise ValueError('Desktop-Google-Anmeldung ist nur am lokalen Rechner verfügbar.')
+                    if self.server.origin or self.private_origin() or self.server.server_address[0]!='127.0.0.1': raise ValueError('Desktop-Google-Anmeldung ist nur am lokalen Rechner verfügbar.')
                     self.send(200,self.server.drive.begin('http://127.0.0.1:'+str(self.server.server_port)+'/api/google/callback',self.token()))
                 elif action=='select': self.send(200,self.server.drive.select(self.body().get('ids')))
                 elif action=='sync': self.send(200,self.server.drive.sync())
@@ -389,13 +392,15 @@ def make_server(store,host='127.0.0.1',port=8765,origin=''):
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument('command',choices=['init','serve','backup'])
+    p.add_argument('command',choices=['init','serve','backup','private-access'])
     p.add_argument('--data',default=str(Path.home()/'.local/share/agent-x-2/data.sqlite3'))
     p.add_argument('--host',default='127.0.0.1');p.add_argument('--port',type=int,default=8765)
     p.add_argument('--origin',default='');p.add_argument('--output')
     p.add_argument('--automate',action='store_true',help='Lokale Importpakete aus privatem imports/inbox-Ordner automatisch ergänzen.')
     p.add_argument('--managed-start',action='store_true')
     args=p.parse_args();store=Store(args.data)
+    if args.command=='private-access':
+        private_access.setup(store.path.parent);return
     if args.command=='init':
         password=getpass.getpass('Neues Passwort (mindestens 12 Zeichen): ')
         if password!=getpass.getpass('Passwort wiederholen: '): raise SystemExit('Passwörter stimmen nicht überein.')
