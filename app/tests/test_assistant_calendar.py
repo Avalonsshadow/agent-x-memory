@@ -110,6 +110,18 @@ class Features(unittest.TestCase):
         worker=Briefings(self.store);worker.tick();self.assertIsNotNone(worker.status()['last_success'])
         with self.store.connect() as db:payload=json.loads(db.execute('SELECT payload FROM briefings').fetchone()[0])
         self.assertEqual(payload['total_records'],1);self.assertEqual(len(payload['upcoming']),1)
+    def test_windows_main_startup_branch_has_runtime_imports(self):
+        import ast
+        import types
+        import server
+        source=Path(server.__file__).read_text()
+        main=next(n for n in ast.parse(source).body if isinstance(n,ast.FunctionDef) and n.name=='main')
+        branch=next(n for n in ast.walk(main) if isinstance(n,ast.If) and 'args.automate and os.name' in ast.unparse(n.test))
+        state=self.store.path.parent
+        startup=Mock();startup.status.return_value={'status':'not_installed'};startup.install.return_value={'runner':str(state/'runner.py')}
+        processes=Mock();globals_=dict(vars(server));globals_.update(os=types.SimpleNamespace(name='nt'),windows_startup=startup,subprocess=processes,args=types.SimpleNamespace(automate=True,origin='',host='127.0.0.1',port=8765,data=str(Path.home()/'.local/share/agent-x-2/data.sqlite3'),managed_start=False),store=self.store)
+        exec(compile(ast.Module(body=[branch],type_ignores=[]),'Windows startup branch','exec'),globals_)
+        startup.install.assert_called_once();processes.Popen.assert_called_once()
     def test_windows_startup_paths_spaces_quotes_and_remove(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)/'Code With Spaces';root.mkdir();state=self.store.path.parent

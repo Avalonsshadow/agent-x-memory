@@ -39,3 +39,6 @@ Fünf zusätzliche Tests: Zugriffsschutz/CSRF und Desktop-Konfigurationsvalidier
 
 ## Assistent, Kalender, Windows-Start (2026-10-04)
 37 Python-Tests und Frontend-Adapter bestanden. Neue Testfälle: Quellen und Dokumentinhalte, reale Projektkennzahlen, offene Lernaufgaben, leere Antworten, Auth/CSRF/Origin, separater Kalender-OAuth-Scope, Tokenpersistenz ohne Exportleck, Ereignisänderungen und Absagen, Projektzuordnung, Export/Restore, zu viele Seiten ohne Teilübernahme, Quelloffset-Datum, keine Wiederanlage lokal gelöschter Termine, persistierte Tagesübersicht, Startup-Dateien/Runner mit Leerzeichen und Entfernung. Google-Antworten simuliert; Windows-Anmeldung, reales Kalender-OAuth und Browserlayout bleiben unbestätigt.
+
+### Windows-Startkorrektur
+Fehlender sys-Import im Windows-Startpfad korrigiert. Regressionstest führt den tatsächlichen Windows-Installationszweig aus dem AST von main mit isolierten Plattform-/Prozess-Doubles aus. Kein Windows-Rechnerzugriff und keine echte Anmeldung behauptet.

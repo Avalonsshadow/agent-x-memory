@@ -23,6 +23,7 @@ import google_calendar
 import windows_startup
 from briefings import Briefings
 import subprocess
+import sys
 from live_updates import Updates
 
 WEB = Path(__file__).parent / 'web'
