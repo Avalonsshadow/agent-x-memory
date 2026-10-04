@@ -48,3 +48,8 @@ Frontend-Adapter gegen echten HTTP/SQLite-Server bestätigt: gemeinsame Health-/
 
 ## LCARS Cockpit · 2026-10-04
 Gewählte Variante 1 umgesetzt. JavaScript-Syntaxprüfung und isolierter Frontend/API-Test bestanden: Anmeldung, neun Module, Anlegen/Bearbeiten/Neuladen, Suche, Quellen, Export, Kalender und Uhrzeiten; zusätzlich Cockpit-Bereiche und maskierte bereichsübergreifende Termine geprüft. Responsive CSS für Desktop und kleine Displays implementiert. Erneute echte Browser-/Screenshotprüfung in dieser Phase blockiert: Chromium fehlt, Download liefert ungültiges ZIP. Daher keine Behauptung einer abgeschlossenen visuellen iPhone-Prüfung. Veröffentlichte Webdateien per GitHub wieder abgerufen und vollständig mit lokalem Inhalt verglichen.
+
+## Referenzgetreues Cockpit · zweite Prüfung 2026-10-04
+Die zuvor blockierte visuelle Prüfung ist jetzt möglich: Chrome Headless Shell separat bereitgestellt. Browser-Test bei 1440×1000 und 390×844 bestanden. Screenshots beider Ansichten kontrolliert; mobile Navigationsüberlagerung korrigiert und erneut geprüft. Durchgehender orangefarbener Rahmen, schlanke SVG-Navigation, drei echte Kennzahlen, Heute/Fokus nebeneinander, rechte Wochenleiste mit sieben Tagen, Projektkarten, Schnellzugriff und datenbasierte Verbindungsstatusleiste. Keine Referenz-Beispieldaten in Nutzerdaten übernommen.
+
+40 Python-Tests bestanden, Frontend/API-Test bestanden. Echter Browser prüft Anmeldung, neun Module, Anlegen/Bearbeiten/Neuladen, Suche, maskierte Inhalte, Fortschritt, Quellenantwort, Export, Wochenleisten-Kalenderöffnung, Dokumentdialog, mobile Navigation und Abmeldung. Kein horizontaler Überlauf bei 390 px. Physisches iPhone/Safari bleibt separat ungeprüft. Änderungen vor GitHub-Bereitstellung geprüft.
