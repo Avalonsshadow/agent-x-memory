@@ -48,6 +48,12 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  await importInput.listeners.change({target:importInput});
  assert.equal(evalJS('records.filter(r=>r.id==="'+ 'c'.repeat(32)+'").length'),1);
  assert.equal(evalJS(`records.find(r=>r.id==='${result.id}').title`),'Frontend · bearbeitet');
+ const calendarMarkup=evalJS('calendarPanel()');
+ const calendarIds=[...calendarMarkup.matchAll(/id="([^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(calendarIds).size,calendarIds.length);
+ const beforeCalendarFetch=context.fetch;context.fetch=async(url,options)=>url==='/api/calendar/calendars'?{ok:true,json:async()=>({items:[{id:'fixture',summary:'Testkalender',timeZone:'Europe/Berlin'}]})}:beforeCalendarFetch(url,options);
+ await node('#content').listeners.click({target:{closest(){return {id:'calendar-list',dataset:{}}}}});
+ assert.match(node('#calendar-options').innerHTML,/data-calendar/);assert.match(node('#calendar-options').innerHTML,/Auswahl speichern/);
+ assert.doesNotMatch(node('#calendar-list').innerHTML,/data-calendar/);context.fetch=beforeCalendarFetch;
  const oldFetch=context.fetch;context.fetch=async()=>{throw new Error('Disconnected')};
  await assert.rejects(evalJS("api('/api/records')"),/nicht erreichbar/);context.fetch=oldFetch;
  await evalJS(`api('/api/records/${result.id}',{method:'DELETE'})`);
