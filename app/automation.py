@@ -96,4 +96,4 @@ class ImportWorker:
 
     def close(self):
         self.stop.set()
-        self.thread.join(timeout=3)
+        self.thread.join()

@@ -17,6 +17,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit, parse_qs, quote
 from automation import ImportWorker
 import documents
+import drive
+from live_updates import Updates
 
 WEB = Path(__file__).parent / 'web'
 KINDS = {'project', 'task', 'note', 'fact', 'document', 'event'}
@@ -247,12 +249,26 @@ class Handler(BaseHTTPRequestHandler):
         return True
     def do_GET(self):
         path=urlsplit(self.path).path
+        if path=='/api/google/callback':
+            query=parse_qs(urlsplit(self.path).query)
+            try:
+                self.server.drive.complete(query.get('state',[''])[0],query.get('code',[''])[0],query.get('error',[''])[0])
+                self.send(200,b'<h1>Google Drive verbunden</h1><a href="/#systems">Zurueck zu Agent X</a>','text/html; charset=utf-8')
+            except (ValueError,KeyError,TypeError):
+                with self.server.drive.lock:
+                    self.server.drive.state['error']='Google-Anmeldung fehlgeschlagen oder abgelaufen. Erneut verbinden.';self.server.drive.save()
+                self.send(400,{'error':'Google-Anmeldung fehlgeschlagen oder abgelaufen. In Agent X erneut verbinden.'})
+            return
         if path=='/api/session':
             csrf=self.server.store.session(self.token())
             self.send(200,{'authenticated':bool(csrf),'csrf':csrf,'configured':self.server.store.configured()});return
         if path.startswith('/api/'):
             if not self.auth(): return
-            if path=='/api/records': self.send(200,self.server.store.records())
+            if path=='/api/drive/status': self.send(200,self.server.drive.status())
+            elif path=='/api/drive/files':
+                try: self.send(200,self.server.drive.files(parse_qs(urlsplit(self.path).query).get('page',[''])[0]))
+                except (ValueError,KeyError,TypeError) as e: self.send(400,{'error':str(e) if isinstance(e,ValueError) else 'Ungültige Google-Antwort.'})
+            elif path=='/api/records': self.send(200,self.server.store.records())
             elif path=='/api/export': self.send(200,self.server.store.export())
             elif path=='/api/documents': self.send(200,documents.listing(self.server.store))
             elif path=='/api/documents/search':
@@ -268,7 +284,7 @@ class Handler(BaseHTTPRequestHandler):
                     updater=json.loads((self.server.store.path.parent/'update-status.json').read_text())
                 except (OSError,ValueError):
                     updater={'status':'inactive','last_success':None,'error':None}
-                self.send(200,{'storage':'SQLite · gespeichert auf diesem Server','activity':self.server.store.activity(),'integrations':[{'name':n,'status':'not_configured','last_success':None,'error':None} for n in ['Google Drive','Gmail','Google Kalender','GitHub']],'jobs':{'status':'inactive','last_success':None},'automation':{'imports':self.server.import_worker.status() if self.server.import_worker else {'status':'inactive','last_success':None,'error':None},'updates':updater},'documents':{'count':len(documents.listing(self.server.store)),'pdf_available':documents.pdf_available(),'ocr':'inactive'},'online':self.server.secure})
+                self.send(200,{'storage':'SQLite · gespeichert auf diesem Server','activity':self.server.store.activity(),'drive':self.server.drive.status(),'drive_worker_active':bool(self.server.drive_worker),'live_updates':{'active':bool(self.server.updates),'error':self.server.updates.error if self.server.updates else None},'integrations':[self.server.drive.status()]+[{'name':n,'status':'not_configured','last_success':None,'error':None} for n in ['Gmail','Google Kalender','GitHub']],'jobs':{'status':'inactive','last_success':None},'automation':{'imports':self.server.import_worker.status() if self.server.import_worker else {'status':'inactive','last_success':None,'error':None},'updates':updater},'documents':{'count':len(documents.listing(self.server.store)),'pdf_available':documents.pdf_available(),'ocr':'inactive'},'online':self.server.secure})
             else: self.send(404,{'error':'Nicht gefunden.'})
             return
         allowed={'/':'index.html','/app.js':'app.js','/style.css':'style.css','/manifest.webmanifest':'manifest.webmanifest','/sw.js':'sw.js','/icon.svg':'icon.svg'}
@@ -305,7 +321,21 @@ class Handler(BaseHTTPRequestHandler):
                 else: self.send(401,{'error':'Anmeldung fehlgeschlagen.'})
                 return
             if not self.auth(True): return
-            if path=='/api/logout' and method=='POST':
+            if path.startswith('/api/drive/') and method=='POST':
+                action=path.rsplit('/',1)[-1]
+                if action=='configure': self.send(200,self.server.drive.configure(self.body()))
+                elif action=='connect':
+                    if self.server.origin or self.server.server_address[0]!='127.0.0.1': raise ValueError('Desktop-Google-Anmeldung ist nur am lokalen Rechner verfügbar.')
+                    self.send(200,self.server.drive.begin('http://127.0.0.1:'+str(self.server.server_port)+'/api/google/callback',self.token()))
+                elif action=='select': self.send(200,self.server.drive.select(self.body().get('ids')))
+                elif action=='sync': self.send(200,self.server.drive.sync())
+                elif action=='disconnect': self.send(200,self.server.drive.disconnect())
+                else: self.send(404,{'error':'Nicht gefunden.'})
+            elif path=='/api/updates/check' and method=='POST':
+                if not self.server.updates: raise ValueError('Automatische Updates sind bei diesem Start nicht aktiv.')
+                self.send(202,{'ok':True})
+                threading.Thread(target=self.server.updates.check,daemon=True).start()
+            elif path=='/api/logout' and method=='POST':
                 with self.server.store.connect() as db: db.execute('DELETE FROM sessions WHERE token=?',(hashlib.sha256(self.token().encode()).hexdigest(),))
                 self.send(200,{'ok':True},cookie=self.cookie('',0))
             elif path=='/api/records' and method=='POST': self.send(201,self.server.store.save(self.body()))
@@ -327,6 +357,7 @@ def make_server(store,host='127.0.0.1',port=8765,origin=''):
     server=ThreadingHTTPServer((host,port),Handler)
     server.store=store;server.origin=origin;server.secure=origin.startswith('https://')
     server.import_worker=None
+    server.drive=drive.Drive(store);server.drive_worker=None;server.updates=None
     server.attempts={}; server.lock=threading.Lock()
     return server
 
@@ -357,6 +388,8 @@ def main():
         if args.automate:
             print('PDF-Texterkennung wird geprüft …',flush=True)
             documents.prepare_pdf()
+            server.drive_worker=drive.Worker(server.drive);server.drive_worker.start()
+            server.updates=Updates(server);server.updates.start()
             server.import_worker=ImportWorker(store)
             server.import_worker.start()
             print('Automatischer Import: '+str(server.import_worker.directory/'inbox'),flush=True)
@@ -364,6 +397,9 @@ def main():
         try: server.serve_forever()
         except KeyboardInterrupt: pass
         finally:
+            if server.updates: server.updates.close()
+            if server.drive_worker: server.drive_worker.close()
             if server.import_worker: server.import_worker.close()
             server.server_close()
+        if server.updates and server.updates.restart: server.updates.apply()
 if __name__=='__main__': main()

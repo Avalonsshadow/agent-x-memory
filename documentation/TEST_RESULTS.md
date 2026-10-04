@@ -3,7 +3,7 @@
 Datum: 2026-10-04. Alle Tests ausschließlich mit temporären Beispieldaten; keine persönlichen Inhalte importiert.
 
 ## Bestanden
-- 23 Python-Tests: geschützte Datenendpunkte; CRUD/Persistenz nach Neuöffnung der Datenbank; Sitzungen nach Neuöffnung; CSRF und fremder Origin; Login-Begrenzung; Datums-/Quellen-/Linkvalidierung; Projektverknüpfung und Löschung; atomarer JSON-Restore; Importanweisungen bleiben Text; Logout; Integrations-/Jobstatus; Pfad-/Headerprüfung; Passwortwechsel; Secure-Cookie.
+- 28 Python-Tests: geschützte Datenendpunkte; CRUD/Persistenz nach Neuöffnung der Datenbank; Sitzungen nach Neuöffnung; CSRF und fremder Origin; Login-Begrenzung; Datums-/Quellen-/Linkvalidierung; Projektverknüpfung und Löschung; atomarer JSON-Restore; Importanweisungen bleiben Text; Logout; Integrations-/Jobstatus; Pfad-/Headerprüfung; Passwortwechsel; Secure-Cookie.
 - `node --check app/web/app.js` und Python-Kompilierung.
 - Frontend-Funktionstest im Node-VM-Testadapter gegen echtes Python/SQLite-Backend: neun Module, Anmeldung, Anlegen, Bearbeitungsformular, Datenabruf, Suche, HTML-Escaping, Quellenantworten, errechneter Aufgabenfortschritt, Export, ergänzender Import inklusive Wiederholung, Verbindungsfehler und Abmeldung. **DOM-Adapter, kein echter Browser.**
 - Lokaler HTTP-Start erfolgreich. Beispielvorschau wird als eigenständige HTML-Datei aus denselben Oberflächenquellen generiert. Sie hat keinen Zugriffsschutz und speichert Änderungen nur bis zum Neuladen; deutlich markiert.
@@ -33,3 +33,6 @@ Neue Tests mit isolierten Datenbanken/Dateien: stabile Dateierkennung, automatis
 
 ## Dokumentausbau
 Geprüft: authentifizierter Upload und Download, CSRF, unzulässige Dateinamen/-typen und Base64, Quellenpflicht, PDF-Seitenextraktion mit synthetischem PDF, DOCX-Absätze, Textzeilen, neueste Version in Volltexttreffern, Originalintegrität/SHA-256, Persistenz nach Datenbank-Neuöffnung, Löschung aller Versionen, atomarer Export/Restore einschließlich beschädigtem Hash, ergänzender Import samt Vorschau und Wiederholung. PDF-Test mit verfügbarer pypdf-Laufzeit; automatischer Paketdownload auf Windows bleibt eine Laufzeitprüfung. Frontend-Adapter prüft zusätzlich echtes Uploadformular, Suchtreffer mit Quellenstelle und Export der Originaldatei. Kein echter Browser-/iPhone-Test.
+
+## Drive und laufende Updates
+Fünf zusätzliche Tests: Zugriffsschutz/CSRF und Desktop-Konfigurationsvalidierung; OAuth-State/PKCE, Einmaligkeit, Ablauf und Scopeprüfung; Tokenpersistenz ohne Eintragsexport-Leak; Refresh und gewählte Dateien mit unveränderten/aktualisierten Originalversionen; Backups, API-Fehlerstatus, Paging und lokales Trennen; tatsächlicher periodischer Worker gegen simulierten Google-Transport; Update-Prüfung gegen simulierte Commitantwort, Shutdown und Backup/Exec-Aufruf. Bestehende 23 Tests und Frontend-Adapter weiterhin bestanden. Google-Antworten sind **simuliert**; OAuth-Projekt, echte Benutzeranmeldung, echte Drive-End-to-End-Synchronisation und Windows-Exec-Neustart sind noch nicht bestätigt. Diese Phase ist implementiert und isoliert geprüft, auf dem Nutzerrechner ohne ersten Starterlauf nicht aktiviert.
