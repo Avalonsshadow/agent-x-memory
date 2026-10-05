@@ -71,3 +71,7 @@ footer{letter-spacing:.6px}footer:before{content:'Design: Cockpit 2026.10.05';co
 @media(max-width:720px){.deck-heading h1{font-size:28px}.deck-heading p{font-size:17px}header .search{height:44px}.deck-metrics .stat{display:block}.deck-metrics .stat:before{display:none}.deck-project-grid .deck-card-copy{flex-basis:calc(100% - 85px)}footer{flex-wrap:wrap;gap:6px}}
 
 .deck-status .connection[data-connection=connected]:before{background:#74e68a}.deck-status .connection[data-connection=error]:before{background:#ff982f}
+
+/* Explicit importance independent from completion status. */
+.priority-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px}.priority-icon{font-size:16px;line-height:1;font-weight:800}.priority-none{color:#b9c9d7}.priority-field{grid-column:1/-1;border:1px solid #355068;border-radius:12px;padding:14px;background:#071b2c;margin-bottom:16px}.priority-field label{margin-bottom:8px}.priority-choices{display:flex;gap:8px;flex-wrap:wrap}.priority-choices button{font-size:13px;min-height:44px;border-color:currentColor;background:#102537}.priority-choices button[aria-pressed=true]{outline:2px solid currentColor;outline-offset:2px;box-shadow:inset 0 0 20px #ffffff12;font-weight:750}.priority-field p{font-size:12px;color:#b4cbe0;margin:12px 0 0}.deck-card .priority-badge{margin-top:3px}.deck-twin .deck-card .priority-badge{margin-left:auto}.deck-side .deck-card .priority-badge{margin-left:auto}@media(max-width:720px){.priority-choices button{flex:1 1 40%}}
+footer:before{content:'Cockpit 2026.10.05 · Prioritäten 2'}
