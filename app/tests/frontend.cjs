@@ -12,7 +12,7 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  await new Promise(r=>setTimeout(r,100));
  await evalJS("(async()=>{const r=await api('/api/login',{method:'POST',body:JSON.stringify({password:'Demo-only-password-42!'})});csrf=r.csrf;await enter()})()");
  assert.equal(node('#shell').hidden,false);
- assert.equal((node('#navigation').innerHTML.match(/href="#/g)||[]).length,9);
+ assert.equal((node('#navigation').innerHTML.match(/href="#/g)||[]).length,7);
  const result=await evalJS(`api('/api/records',{method:'POST',body:${JSON.stringify(JSON.stringify(fixture))}})`);
  await evalJS('refresh()');
  node('#search').value='Abc321';evalJS('render()');
@@ -86,5 +86,5 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  await node('#logout').listeners.click();
  assert.equal(node('#shell').hidden,true);assert.equal(node('#content').innerHTML,'');
  await assert.rejects(evalJS("api('/api/export')"),/Bitte anmelden/);
- console.log('Frontend PASS: navigation (9), login/API, create, form edit, refresh, search, XSS escaping, sources, real progress, export, additive import/repeat, connection failure, logout. No browser/layout/iOS claim.');
+ console.log('Frontend PASS: navigation (7 main areas; legacy routes retained), login/API, create, form edit, refresh, search, XSS escaping, sources, real progress, export, additive import/repeat, connection failure, logout. No browser/layout/iOS claim.');
 })().catch(e=>{console.error(e);process.exit(1)});
