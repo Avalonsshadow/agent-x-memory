@@ -78,3 +78,7 @@ Frontend checks cover confirmed-but-open tasks, separate completed records, empt
 ## Seven main areas · 2026-10-05
 
 Frontend and Chromium checks cover seven main links and seven distinct icon colors, retained legacy routes, Laboratory entry from the project workspace, a shared task view containing tasks from all areas, assistant Crew access with four explicit perspectives, editor save/reload, export, source answers and mobile navigation/overflow. All persistent backend identifiers and records remain unchanged; no migration or duplicate data is introduced. Browser tests use disposable example data, not personal records.
+
+## Local repetitions · 2026-10-05
+
+45 Python tests pass, including new persistence/export and atomic rollback checks for event series. Frontend checks selected Tuesday/Thursday dates and rejects empty weekdays or an invalid end date. Chromium creates a four-occurrence training series, reloads and checks all four saved records. Europe/Berlin timezone verification across the October 2026 DST transition confirms 10:00 local remains 10:00 while UTC changes from 08:00 to 09:00. Existing navigation/CRUD/search/export and mobile checks remain covered. Limits and individual-only series editing are explicit in the editor.
