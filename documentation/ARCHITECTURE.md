@@ -62,3 +62,9 @@ Serverseitige deterministische Antwort-API, keine LLM-Aufrufe oder Toolausführu
 
 ## Prioritäten und Modulgestaltung · 2026-10-04
 Records erhalten die optionale SQLite-Spalte priority mit Werten leer/high/medium/low. Idempotente ALTER-TABLE-Migration erhält vorhandene IDs und Inhalte; ältere Importe bleiben kompatibel. PUT ohne Priorität erhält den vorhandenen Wert, expliziter Leerwert entfernt die Priorität. Export/Restore enthalten den Wert. Keine automatisch erfundenen Prioritäten. Fokus sortiert erst nach gesetzter Priorität, dann Blockade und Datum. Modulfarben und SVG-Icons sind statische lokale UI-Assets; keine externe Icon-Bibliothek oder CDN-Abhängigkeit.
+
+## Seven primary areas · 2026-10-05
+
+User-approved navigation now contains Zentrale, Alltag & Familie, Finanzen, Gesundheit & Entwicklung, Projekte & Ideen, Wissen & Dokumente and Systeme & Verbindungen. Laboratory is a linked specialty view within the project workspace. Crew perspectives are accessed from the assistant dialog. There are seven main navigation links; legacy Laboratory and Crew hash routes remain compatible.
+
+Storage identifiers are intentionally unchanged: lounge, economics, health, projects, library, systems, laboratory and crew. No record is copied or migrated merely for navigation. All-work task/project views use existing records across areas, and one calendar remains shared. Knowledge/document views include document records from all areas without duplicating them. Existing Crew records retain their editable legacy assignment; Laboratory can still be selected as a project specialty. Integrations, permission boundaries and backups are unchanged.
