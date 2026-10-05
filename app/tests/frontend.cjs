@@ -24,6 +24,9 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  await evalJS('refresh()');
  assert.equal(evalJS(`records.find(r=>r.id==='${result.id}').title`),'Frontend · bearbeitet');
  await evalJS("ask('Welche Fristen stehen an?')");assert.match(node('#answer').innerHTML,/Quelle: Frontend-Testfixture/);
+ const repeating={...fixture,kind:'event',due:'2026-10-05',repeat_mode:'weekdays',repeat_until:'2026-10-15',start_time:'09:00',end_time:'10:00',end_date:''};
+ const repeats=evalJS(`buildRepeatedEvents(${JSON.stringify(repeating)},'',['2','4'])`);assert.deepEqual(Array.from(repeats,r=>r.due),['2026-10-06','2026-10-08','2026-10-13','2026-10-15']);assert(repeats.every(r=>r.body.startsWith('Beginn: ')));
+ assert.throws(()=>evalJS(`buildRepeatedEvents(${JSON.stringify({...repeating,repeat_until:'2026-10-01'})},'',['2'])`));assert.throws(()=>evalJS(`buildRepeatedEvents(${JSON.stringify(repeating)},'',[])`));
  const groupedFixture=[{...fixture,id:'open-confirmed',status:'open',evidence:'confirmed',priority:'low'},{...fixture,id:'active',status:'active',priority:'high'},{...fixture,id:'done',status:'done',priority:'high'}];
  const grouped=evalJS(`groupedRecords(${JSON.stringify(groupedFixture)},'task')`);
  assert.match(grouped,/data-record-group="active"/);assert.match(grouped,/data-record-group="open"/);assert.match(grouped,/<details class="record-group group-done"/);assert.match(grouped,/Angabe: Bestätigt/);
