@@ -24,6 +24,11 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  await evalJS('refresh()');
  assert.equal(evalJS(`records.find(r=>r.id==='${result.id}').title`),'Frontend · bearbeitet');
  await evalJS("ask('Welche Fristen stehen an?')");assert.match(node('#answer').innerHTML,/Quelle: Frontend-Testfixture/);
+ const groupedFixture=[{...fixture,id:'open-confirmed',status:'open',evidence:'confirmed',priority:'low'},{...fixture,id:'active',status:'active',priority:'high'},{...fixture,id:'done',status:'done',priority:'high'}];
+ const grouped=evalJS(`groupedRecords(${JSON.stringify(groupedFixture)},'task')`);
+ assert.match(grouped,/data-record-group="active"/);assert.match(grouped,/data-record-group="open"/);assert.match(grouped,/<details class="record-group group-done"/);assert.match(grouped,/Angabe: Bestätigt/);
+ const eventFixture=[{...fixture,kind:'event',id:'no-date-1',due:''},{...fixture,kind:'event',id:'no-date-2',due:''},{...fixture,kind:'event',id:'past',due:'2020-01-01'},{...fixture,kind:'event',id:'future',due:'2099-01-01'}];
+ const groupedEvents=evalJS(`groupedRecords(${JSON.stringify(eventFixture)},'event')`);assert.match(groupedEvents,/data-record-group="undated"/);assert.match(groupedEvents,/data-record-group="future"/);assert.match(groupedEvents,/<details class="record-group group-past"/);
  assert.match(evalJS("projectProgress(records.find(r=>r.kind==='project'&&r.title==='Beispiel · Lernplan strukturieren'))"),/1 \/ 2 Aufgaben erledigt · 50 %/);
  for(const view of ['lounge','library','economics','health','laboratory','crew','projects','systems']){context.location.hash='#'+view;node('#search').value='';evalJS('render()');assert.match(node('#content').innerHTML,/<h1>/);}
  assert.match(node('#content').innerHTML,/Nicht eingerichtet/);assert.match(node('#content').innerHTML,/Inaktiv/);
