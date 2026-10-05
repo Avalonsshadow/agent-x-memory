@@ -145,6 +145,27 @@ class Store:
             db.execute('INSERT OR REPLACE INTO records ('+','.join(keys)+') VALUES ('+','.join('?' for _ in keys)+')', [values[k] for k in keys])
             db.execute('INSERT INTO activity(action,record_id,ts) VALUES (?,?,?)', ('updated' if old else 'created',record_id_new,now()))
             return values
+    def save_event_series(self, payload):
+        events=payload.get('events') if isinstance(payload,dict) else None
+        if not isinstance(events,list) or not 2 <= len(events) <= 366:
+            raise ValueError('Eine Serie benötigt 2 bis 366 Termine.')
+        series='Terminserie:'+secrets.token_hex(6)
+        with self.connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            prepared=[]
+            for event in events:
+                if not isinstance(event,dict) or event.get('kind')!='event' or not event.get('due'):
+                    raise ValueError('Serien enthalten ausschließlich datierte Termine.')
+                tags=event.get('tags','')
+                if not isinstance(tags,str): raise ValueError('Ungültiges Feld: tags')
+                values=self.validate({**event,'tags':(tags+', '+series).strip(', ')},db,None)
+                values.update(id=secrets.token_hex(16),created=now(),updated=now())
+                prepared.append(values)
+            for values in prepared:
+                keys=list(values)
+                db.execute('INSERT INTO records ('+','.join(keys)+') VALUES ('+','.join('?' for _ in keys)+')',[values[k] for k in keys])
+                db.execute('INSERT INTO activity(action,record_id,ts) VALUES (?,?,?)',('created',values['id'],now()))
+            return {'count':len(prepared),'series':series,'ids':[v['id'] for v in prepared]}
     def delete(self, record_id):
         with self.connect() as db:
             if db.execute('DELETE FROM records WHERE id=?', (record_id,)).rowcount != 1:
@@ -373,6 +394,7 @@ class Handler(BaseHTTPRequestHandler):
             elif path=='/api/logout' and method=='POST':
                 with self.server.store.connect() as db: db.execute('DELETE FROM sessions WHERE token=?',(hashlib.sha256(self.token().encode()).hexdigest(),))
                 self.send(200,{'ok':True},cookie=self.cookie('',0))
+            elif path=='/api/event-series' and method=='POST': self.send(201,self.server.store.save_event_series(self.body()))
             elif path=='/api/records' and method=='POST': self.send(201,self.server.store.save(self.body()))
             elif path=='/api/documents' and method=='POST': self.send(201,documents.upload(self.server.store,self.body(),now()))
             elif path.startswith('/api/records/') and method in ('PUT','DELETE'):
