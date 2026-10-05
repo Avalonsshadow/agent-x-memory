@@ -26,3 +26,7 @@ Variante 1 „LCARS Cockpit“ wurde vom Nutzer gewählt: dunkles Navy, orange S
 
 ### Konkretisierte Cockpit-Anordnung
 Referenzbild als Layoutbasis: drei Kennzahlen, Heute/Fokus parallel, rechts sieben Tage und Schnellzugriff, darunter aktive Projekte und Verbindungsstatus. Zusätzliche Änderungsübersicht und Datenabfrage bleiben aufklappbar. Mobile Ansicht stapelt die Bereiche und verbirgt die Navigation bis zum Menüaufruf. Ausgegebene Status und Zahlen basieren ausschließlich auf gespeicherten Datensätzen und Integrationsstatus.
+
+## Approved simplification · 2026-10-05
+
+Seven primary areas supersede the initial requirement for nine main navigation modules. Laboratory remains an AI experiment specialty under Projekte & Ideen; Crew becomes an assistant access point. All task and calendar views share the same records; financial and health/personal development navigation are consolidated under clear German names. Existing data, identifiers, sources and project links remain intact. No new financial/medical capabilities or separate technical agents are implied by this navigation change.
