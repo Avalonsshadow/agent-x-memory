@@ -56,3 +56,9 @@ Die zuvor blockierte visuelle Prüfung ist jetzt möglich: Chrome Headless Shell
 
 ## Prioritäten & farbige Module · 2026-10-04
 43 Python-Tests einschließlich Migration, gültigen/ungültigen Prioritäten, Bestandserhalt, Speicherung, Export/Restore und alten Bearbeitungsaufrufen bestanden. Frontend/API-Suite und echter Headless-Browser bei 1440×1000 / 390×844 bestanden. Browser prüft neun verschiedene berechnete Iconfarben, sichtbare Hoch-Priorität, Auswahl Mittel im Editor und erneute Anzeige nach Neuladen, sechs Modulübersichten, Bibliothek-/Lounge-/Health-/Laboratory-Screenshots, mobile Navigation und fehlenden horizontalen Überlauf. Desktop und mobile Screenshots visuell geprüft; enge Kartenumbrüche korrigiert. Testdaten ausschließlich isolierte temporäre SQLite-Dateien. Physisches Safari-iPhone weiterhin separat ungeprüft.
+
+## Reference alignment · 2026-10-05
+
+Aligned the implemented cockpit with the supplied navy/orange reference: saturated cyan controls, orange continuous frame, distinct module icon colors, blue project progress, compact desktop twin panels and responsive mobile stacking. Added explicit design version `Cockpit 2026.10.05` and versioned stylesheet/script URLs to distinguish stale installations and refresh cached assets. Connection dots reflect real offline/connected/error states; no demonstration figures or fake connections enter personal storage.
+
+Validation: all 43 Python tests passed; frontend functional checks passed; headless Chromium passed login, nine module colors, exact cyan/orange CSS values, desktop twin columns, versioned stylesheet, edit/reload, search, export, source answers, logout and mobile overflow/navigation. Visual inspection used the real rendered app at desktop and 390px mobile widths with a disposable fixture database. The separately generated image is only a design reference, not verification evidence. Physical iPhone and Patrick's running Windows installation were not remotely verified.
