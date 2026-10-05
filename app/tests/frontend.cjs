@@ -24,7 +24,7 @@ const fixture={kind:'task',title:'Frontend Test <script>x</script>',body:'Suchwo
  await evalJS('refresh()');
  assert.equal(evalJS(`records.find(r=>r.id==='${result.id}').title`),'Frontend · bearbeitet');
  await evalJS("ask('Welche Fristen stehen an?')");assert.match(node('#answer').innerHTML,/Quelle: Frontend-Testfixture/);
- assert.match(evalJS("projectProgress(records.find(r=>r.kind==='project'))"),/1 \/ 2 Aufgaben erledigt · 50 %/);
+ assert.match(evalJS("projectProgress(records.find(r=>r.kind==='project'&&r.title==='Beispiel · Lernplan strukturieren'))"),/1 \/ 2 Aufgaben erledigt · 50 %/);
  for(const view of ['lounge','library','economics','health','laboratory','crew','projects','systems']){context.location.hash='#'+view;node('#search').value='';evalJS('render()');assert.match(node('#content').innerHTML,/<h1>/);}
  assert.match(node('#content').innerHTML,/Nicht eingerichtet/);assert.match(node('#content').innerHTML,/Inaktiv/);
  const bytes=Buffer.from('Quellenstelle FrontendDokument321');
